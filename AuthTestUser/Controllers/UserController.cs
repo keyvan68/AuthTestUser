@@ -13,11 +13,13 @@ using System.Security.AccessControl;
 using AuthTestUser.ViewModels.User;
 using Microsoft.AspNetCore.Identity;
 using AuthTestUser.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace webapi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[Authorize(Roles = "User")]
 public class UserController : ControllerBase
 {
 

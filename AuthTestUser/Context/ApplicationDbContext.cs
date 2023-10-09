@@ -28,7 +28,7 @@ namespace AuthTestUser.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=192.168.1.13\\MSSQLSERVER_IMP;Database=AuthTestUserDB;user=sa;password=2262;Encrypt=False;");
+            optionsBuilder.UseSqlServer("Server=.;Initial Catalog=AuthUserTestDB;Integrated Security=True;TrustServerCertificate=True;");
         }
 
 

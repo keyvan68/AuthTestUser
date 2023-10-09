@@ -1,0 +1,49 @@
+اگر از JWT استفاده نمی‌کنید و تنها می‌خواهید با استفاده از نقش‌های Identity کنترل دسترسی به اکشن‌های کنترلر UserController را مدیریت کنید، تنظیماتی که در پیشنهاد قبلی آوردم را انجام دهید. به عبارت دقیق‌تر، از تنظیمات Identity و مجوز دهی به صورت زیر استفاده کنید:
+
+ابتدا در فایل Startup.cs، متد ConfigureServices را به شکل زیر تنظیم کنید:
+csharp
+Copy code
+public void ConfigureServices(IServiceCollection services)
+{
+    // ...
+
+    // افزودن سیستم احراز هویت
+    services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+    });
+
+    // افزودن سیستم مجوز دهی
+    services.AddAuthorization(options =>
+    {
+        options.AddPolicy("UserPolicy", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireRole("User");
+        });
+    });
+
+    // ...
+}
+در متد Configure فایل Startup.cs، از کد زیر برای اعمال سیاست مجوز "UserPolicy" برای کل کنترلر UserController استفاده کنید:
+csharp
+Copy code
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    // ...
+
+    app.UseRouting();
+
+    // اعمال میان‌افزار احراز هویت و مجوز دهی
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers().RequireAuthorization("UserPolicy");
+    });
+
+    // ...
+}
+با این تنظیمات، تنها کاربرانی که وارد شده‌اند و نقش "User" را دارند، به اکشن‌های کنترلر UserController دسترسی دارند. در غیر اینصورت، دسترسی به این اکشن‌ها به صورت اتوماتیک محدود خواهد شد و نیازی به JWT یا مکانیزم‌های دیگر نیست.
