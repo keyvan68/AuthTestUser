@@ -30,7 +30,7 @@
 
 
 //            return displayName;
-//        }
+//        }    https://stackoverflow.com/questions/36071987/linq-ef-include-with-select-new-type-lost-included
 
 
 //        public List<EnumViewModel> GetAll(Type EnumIns)
@@ -49,14 +49,14 @@
 
 //                var displayName = displayAttribute != null ? displayAttribute.Name : item.ToString();
 //                int number = (int)item;
-                
+
 //                //int number = int
 
 //                EnumViewModel enumViewModel = new EnumViewModel();
 //                enumViewModel.Name = displayName;
 //                enumViewModel.Code = number;
 
-                
+
 
 //                list.Add(enumViewModel);
 //            }
