@@ -59,18 +59,18 @@
 //            ResultClass<List<KhaneBehdashtListClass>> res = new ResultClass<List<KhaneBehdashtListClass>>();
 
 //            ApplicationDbContext applicationDbContext = new();
-//            IKhanehBehdashtRepository  khanehBehdashtRepository = new KhanehBehdashtRepository(applicationDbContext);
+//            IKhanehBehdashtRepository khanehBehdashtRepository = new KhanehBehdashtRepository(applicationDbContext);
 //            IRostaRepository rostaRepository = new RostaRepository(applicationDbContext);
 //            EnumViewModel EnumViewModel = new EnumViewModel();
 
-//            var Query = khanehBehdashtRepository.GetAll().Where(x=>x.Markaz_ID == this.Markaz_ID);
+//            var Query = khanehBehdashtRepository.GetAll().Where(x => x.Markaz_ID == this.Markaz_ID);
 //            //var rosta = rostaRepository.GetAll();
-            
+
 
 //            if (string.IsNullOrEmpty(KhanehBehdasht_Name) == false) Query = Query.Where(x => string.Compare(x.KhanehBehdasht_Name, KhanehBehdasht_Name) == 0);
 //            //if (RostaType != null) Query = Query.Where(x => x.RostaType == RostaType);
 
-//          //  int markazcount = markazRepository.GetAll().Where(m => m.Markaz_ID == this.Markaz_ID).Count();
+//            //  int markazcount = markazRepository.GetAll().Where(m => m.Markaz_ID == this.Markaz_ID).Count();
 
 
 //            if (this.SortFieldName != null && string.Compare(this.SortFieldName.ToLower(), "khanehbehdasht_name") == 0) Query = Query.OrderBy(x => x.KhanehBehdasht_Name);
@@ -102,8 +102,8 @@
 //                KhanehBehdasht_isAshayeri = x.KhanehBehdasht_isAshayeri,
 //                KhanehBehdasht_Jameiat = x.KhanehBehdasht_Jameiat,
 //                RostaType = x.RostaType,
-//                RostaTypeName = EnumViewModel.GetDisplayName(typeof(RostaTypeEnum), Query.FirstOrDefault().RostaType) ,
-//                Rosta_Count =0 /*rostaRepository.GetAll().Where(r=>r.KhanehBehdasht_ID == x.KhanehBehdasht_ID).Count()*/ // x.Rosta_Tbls.Count()
+//                RostaTypeName = EnumViewModel.GetDisplayName(typeof(RostaTypeEnum), Query.FirstOrDefault().RostaType),
+//                Rosta_Count = x.City_Tbls.Count() /*rostaRepository.GetAll().Where(r=>r.KhanehBehdasht_ID == x.KhanehBehdasht_ID).Count()*/ // x.Rosta_Tbls.Count()
 
 //            }).ToList();
 

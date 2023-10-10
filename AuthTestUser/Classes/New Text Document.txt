@@ -47,3 +47,51 @@ public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     // ...
 }
 با این تنظیمات، تنها کاربرانی که وارد شده‌اند و نقش "User" را دارند، به اکشن‌های کنترلر UserController دسترسی دارند. در غیر اینصورت، دسترسی به این اکشن‌ها به صورت اتوماتیک محدود خواهد شد و نیازی به JWT یا مکانیزم‌های دیگر نیست.
+
+
+
+
+
+
+ مشکل این است که x.City_Tbls مقدار null را برمی‌گرداند و به خطا می‌خورید، باید ابتدا اطمینان حاصل کنید که این خصوصیت به درستی بارگذاری شده باشد. به نظر می‌رسد که این خصوصیت به صورت تاخیری (lazy-loading) بارگذاری می‌شود و اگر اطمینان حاصل نشود که مقداری دارد، خطا به وجود می‌آید.
+
+برای حل این مشکل می‌توانید از یکی از روش‌های زیر استفاده کنید:
+
+Eager Loading: در ابتدا اطمینان حاصل کنید که City_Tbls به صورت eagerly (فوراً) بارگذاری شده باشد. برای این کار می‌توانید از روش Include در Entity Framework استفاده کنید. مثال:
+csharp
+Copy code
+var Query = khanehBehdashtRepository.GetAll()
+    .Include(x => x.City_Tbls)
+    .Where(x => x.Markaz_ID == this.Markaz_ID);
+Null Check: قبل از دسترسی به x.City_Tbls اطمینان حاصل کنید که مقدار آن null نیست. مثال:
+csharp
+Copy code
+Rosta_Count = x.City_Tbls != null ? x.City_Tbls.Count() : 0
+همچنین توجه داشته باشید که در مورد استفاده از eager loading، باید مطمئن شوید که مربوط به کد اصلی شما استفاده می‌شود و تأثیرات جانبی در دیگر قسمت‌های برنامه ایجاد نمی‌شود.
+
+
+
+
+User
+اگه این کد رو بزارم 
+var Query = khanehBehdashtRepository.GetAll()
+    .Include(x => x.City_Tbls)
+    .Where(x => x.Markaz_ID == this.Markaz_ID);
+دیگه از این query ها نمیتونم استفاده کنم 
+ var Query = khanehBehdashtRepository.GetAll().Where(x => x.Markaz_ID == this.Markaz_ID);
+ChatGPT
+در صورتی که از Eager Loading استفاده کنید و با Include داده‌های مرتبط را بارگذاری کنید، به صورت پیش‌فرض داده‌های مرتبط در همان زمان بارگذاری می‌شوند و شما می‌توانید از آن‌ها در ادامه کار استفاده کنید. این به شما این امکان را می‌دهد که در یک کوئری مشترک از داده‌های اصلی و مرتبط استفاده کنید.
+
+پس اگر Query را به صورت زیر تعریف کنید:
+
+csharp
+Copy code
+var Query = khanehBehdashtRepository.GetAll()
+    .Include(x => x.City_Tbls)
+    .Where(x => x.Markaz_ID == this.Markaz_ID);
+سپس می‌توانید از آن در ادامه کار استفاده کنید بدون نیاز به تعریف مجدد Query:
+
+csharp
+Copy code
+var results = Query.ToList(); // یا هر عملیات دیگری که می‌خواهید روی این کوئری انجام دهید
+بدین ترتیب، شما داده‌های مرتبط را همزمان با داده‌های اصلی بارگذاری می‌کنید و می‌توانید در کلیه کوئری‌های بعدی از آن استفاده کنید.
