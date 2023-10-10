@@ -19,19 +19,19 @@ namespace AuthTestUser
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-            });
-            builder.Services.AddAuthorization(options =>
-            {
-                options.AddPolicy("UserPolicy", policy =>
-                {
-                    policy.RequireAuthenticatedUser();
-                    policy.RequireRole("User");
-                });
-            });
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+            //    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+            //});
+            //builder.Services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("UserPolicy", policy =>
+            //    {
+            //        policy.RequireAuthenticatedUser();
+            //        policy.RequireRole("User");
+            //    });
+            //});
             //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string  not found.");
             builder.Services.AddDbContext<ApplicationDbContext>();
 

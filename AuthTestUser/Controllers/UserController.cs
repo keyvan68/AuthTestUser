@@ -19,7 +19,7 @@ namespace webapi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize(Roles = "User")]
+//[Authorize(Roles = "User")]
 public class UserController : ControllerBase
 {
 
@@ -36,8 +36,8 @@ public class UserController : ControllerBase
     }
 
 
-
     [HttpGet, Route("initNew")]
+    [Authorize(Roles = "User")]
     public ResultClass<UserViewModel> initNew()
     {
         try

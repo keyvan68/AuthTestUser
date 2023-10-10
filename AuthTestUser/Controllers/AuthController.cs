@@ -79,8 +79,14 @@ namespace AuthTestUser.Controllers
 
                 return Ok(new { message = "ثبت‌نام موفقیت‌آمیز بود." });
             }
-            // خطا در ثبت‌نام.
-            return BadRequest(new { message = "خطا در ثبت‌نام." });
+            // خطا در ثبت‌ نام.
+            return BadRequest(new { message = "خطا در ثبت‌ نام." });
+        }
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok(new { message = "‌خروج موفقیت‌آمیز بود." });
         }
 
     }

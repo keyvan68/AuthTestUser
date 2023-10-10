@@ -115,7 +115,7 @@ namespace AuthTestUser.Migrations
 
                     b.HasKey("User_ID");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
