@@ -89,7 +89,7 @@
 //            Query = Query.Skip(SkipRecordCount).Take(PageSize.Value);
 
 //            res.Result = Query.AsEnumerable().Select(x => new PersonKarkardGHClass
-//            {
+//            { 
 //                PersonGH_ID = x.PersonGH_ID,
 //                Year_Year = x.Year_Year,
 //                City_ID = x.Markaz_Tbl?.Bakhsh_Tbl?.City_ID ?? Guid.NewGuid(),
