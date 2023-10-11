@@ -150,3 +150,5 @@ var results = Query.ToList(); // یا هر عملیات دیگری که می‌�
                 };
                 var result =  _userManager.CreateAsync(Applicationuser, this.User_Pass);
                 _userManager.AddToRoleAsync(Applicationuser, this.User_Role);
+                https://stackoverflow.com/questions/52038054/web-api-core-returns-404-when-adding-authorize-attribute
+                why when not authorize in web api bring bring back error 404 not error no authorize
