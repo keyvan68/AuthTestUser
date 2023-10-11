@@ -5,6 +5,6 @@ namespace AuthTestUser.Entities
 {
     public class ApplicationUser : IdentityUser<Guid>
     {
-        public User? User{ get; set; }
+        public User? Users{ get; set; }
     }
 }

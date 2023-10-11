@@ -12,12 +12,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace AuthTestUser.ViewModels.User
 {
     public class UserViewModel
     {
-        
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public Guid User_ID { get; set; }
         [Required(ErrorMessage =" کد کاربری اجبای است")]
@@ -26,8 +27,10 @@ namespace AuthTestUser.ViewModels.User
         public string User_Pass { get; set; }
         [Required(ErrorMessage = " نام کاربری اجبای است")]
         public string User_FullName { get; set; }
-
         public string User_Role { get; set; }
+
+
+        //public string User_Role { get; set; }
 
 
 
@@ -38,6 +41,10 @@ namespace AuthTestUser.ViewModels.User
            
         }
 
+        public UserViewModel(UserManager<ApplicationUser> userManager)
+        {
+            _userManager = userManager;
+        }
 
         public ResultClass<UserViewModel> initNew()
         {
@@ -66,6 +73,7 @@ namespace AuthTestUser.ViewModels.User
             ApplicationDbContext applicationDbContext = new();
 
             IUserRepository userRepository = new UserRepository(applicationDbContext);
+           
             var user = userRepository.Find(this.User_ID);
             if (user == null)
             {
@@ -73,9 +81,8 @@ namespace AuthTestUser.ViewModels.User
                 user.User_ID = this.User_ID;
 
                 userRepository.Add(user);
-              
 
-
+                
             }
             else
             {

@@ -95,3 +95,58 @@ csharp
 Copy code
 var results = Query.ToList(); // یا هر عملیات دیگری که می‌خواهید روی این کوئری انجام دهید
 بدین ترتیب، شما داده‌های مرتبط را همزمان با داده‌های اصلی بارگذاری می‌کنید و می‌توانید در کلیه کوئری‌های بعدی از آن استفاده کنید.
+
+
+ //modelBuilder.Entity<ApplicationUser>().HasKey(u => u.Id);
+            //modelBuilder.Entity<ApplicationRole>().HasKey(r => r.Id);
+            //modelBuilder.Entity<IdentityUserRole<Guid>>().HasKey(r => new { r.UserId, r.RoleId });
+            //modelBuilder.Entity<IdentityUserLogin<Guid>>().HasNoKey();
+            //modelBuilder.Entity<IdentityUserToken<Guid>>().HasKey(t=> new {t.UserId,t.LoginProvider,t.Name});
+            //modelBuilder.Entity<IdentityRole<Guid>>().HasData(
+            //new IdentityRole<Guid>
+            //{
+            //        Id = Guid.NewGuid(),
+            //        Name = "Admin",
+            //        NormalizedName = "Admin".ToUpper()
+            //    },
+            //new IdentityRole<Guid>
+            //{
+            //    Id = Guid.NewGuid(),
+            //    Name = "User",
+            //    NormalizedName = "User".ToUpper()
+            //}
+            //);
+            //modelBuilder.Entity<ApplicationUser>().ToTable("AspNetUsers"); 
+            //modelBuilder.Entity<User>().ToTable("Users");
+            //modelBuilder.Entity<ApplicationUser>()
+            //  .HasOne(u => u.Users)
+            //   .WithOne(user => user.ApplicationUser)
+            //   .HasForeignKey<User>(user => user.ApplicationUserId);
+            //modelBuilder.Entity<ApplicationUser>().ToTable("AspNetUsers"); // نام جدول مرتبط با ApplicationUser را تغییر می‌دهیم
+            //modelBuilder.Entity<User>().ToTable("Users"); // نام جدول مرتبط با User را تغییر می‌دهیم
+
+            //// تعریف رابطه بین ApplicationUser و User
+            //modelBuilder.Entity<ApplicationUser>()
+            //    .HasOne(u => u.User)
+            //    .WithOne(user => user.ApplicationUser)
+            //    .HasForeignKey<User>(user => user.ApplicationUserId);
+            //The entity type 'IdentityUserToken<Guid>' requires a primary key to be defined.If you intended to use a keyless entity type, call 'HasNoKey' in 'OnModelCreating'.For more information on keyless entity types, see https://go.microsoft.com/fwlink/?linkid=2141943.
+
+
+
+
+            var Applicationuser  = new ApplicationUser
+                {
+                    UserName = this.User_Code,
+                    Users = new AuthTestUser.Entities.User()
+                    {
+                        User_ID = this.User_ID,
+                        User_Code = this.User_Code,
+                        User_Pass = this.User_Pass,
+                        User_FullName = this.User_FullName,
+                        User_Role = this.User_Role
+                    }
+
+                };
+                var result =  _userManager.CreateAsync(Applicationuser, this.User_Pass);
+                _userManager.AddToRoleAsync(Applicationuser, this.User_Role);

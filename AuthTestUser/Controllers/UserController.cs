@@ -37,7 +37,7 @@ public class UserController : ControllerBase
 
 
     [HttpGet, Route("initNew")]
-    [Authorize(Roles = "User")]
+    //[Authorize(Roles = "User")]
     public ResultClass<UserViewModel> initNew()
     {
         try
@@ -90,7 +90,7 @@ public class UserController : ControllerBase
 
             if (ModelState.IsValid)
             {
-                var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+                //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
                 res = UserViewModel.StoreData();
             }
             else

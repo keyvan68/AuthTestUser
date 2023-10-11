@@ -18,15 +18,17 @@ namespace AuthTestUser.Repository
     public class UserRepository : GenericRepository<User, Guid>, IUserRepository
     {
         protected readonly ApplicationDbContext ApplicatiobContex;
-        
-       
+
+
 
         public UserRepository(ApplicationDbContext ApplicatiobContex) : base(ApplicatiobContex)
         {
             this.ApplicatiobContex = ApplicatiobContex;
         }
-
-       
+        public bool FindByName(string User_Code)
+        {
+           return GetAll().Where(x => string.Compare(x.User_Code, User_Code) == 0).Any();
+        }
 
         public IQueryable<User> GetAll()
         {

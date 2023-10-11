@@ -1,8 +1,13 @@
-﻿using AuthTestUser.Entities;
+﻿using AuthTestUser.Context;
+using AuthTestUser.Entities;
+using AuthTestUser.IRepositories;
+using AuthTestUser.Repository;
+using AuthTestUser.ViewModels;
 using AuthTestUser.ViewModels.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace AuthTestUser.Controllers
 {
@@ -25,9 +30,12 @@ namespace AuthTestUser.Controllers
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             var user = await _userManager.FindByNameAsync(model.User_Code);
+            ApplicationDbContext applicationDbContext= new ApplicationDbContext();
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+
             if (user != null)
             {
-                var result = await _signInManager.PasswordSignInAsync(user, model.User_Pass, false, false);
+                var result = await _signInManager.PasswordSignInAsync(model.User_Code, model.User_Pass, false, false);
                 if (result.Succeeded)
                 {
                     // ورود موفقیت‌آمیز بود.
@@ -53,29 +61,42 @@ namespace AuthTestUser.Controllers
 
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(UserViewModel model)
         {
-            var user = new ApplicationUser
+            var user = new ApplicationUser();
+            //EnumViewModel enumView = new EnumViewModel()
+            if (model.User_Role.Any())
             {
-                UserName = model.User_Code,
-                // اضافه کردن سایر اطلاعات مرتبط با کاربر (مانند User_FullName) در اینجا
-            };
+                user = new ApplicationUser
+                {
+                    UserName = model.User_Code,
+                    Users = new User()
+                    {
+                        User_ID = Guid.NewGuid(),
+                        User_Code = model.User_Code,
+                        User_Pass = model.User_Pass,
+                        User_FullName = model.User_FullName,
+                        User_Role = model.User_Role
+                    }
+
+                };
+            }
 
             var result = await _userManager.CreateAsync(user, model.User_Pass);
             if (result.Succeeded)
             {
-                // ثبت‌نام موفقیت‌آمیز بود.
+            //    // ثبت‌نام موفقیت‌آمیز بود.
 
-                // ایجاد نقش مورد نظر (مثلاً "User") اگر وجود نداشت
-                var roleExists = await _roleManager.RoleExistsAsync("User");
-                if (!roleExists)
-                {
-                    var newRole = new IdentityRole<Guid>("User");
-                    await _roleManager.CreateAsync(newRole);
-                }
+            //    // ایجاد نقش مورد نظر (مثلاً "User") اگر وجود نداشت
+            //    var roleExists = await _roleManager.RoleExistsAsync("User");
+            //    if (!roleExists)
+            //    {
+            //        var newRole = new IdentityRole<Guid>("User");
+            //        await _roleManager.CreateAsync(newRole);
+            //    }
 
                 // اختصاص نقش به کاربر
-                await _userManager.AddToRoleAsync(user, "User");
+                await _userManager.AddToRoleAsync(user, model.User_Role);
 
                 return Ok(new { message = "ثبت‌نام موفقیت‌آمیز بود." });
             }

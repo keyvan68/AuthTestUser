@@ -51,21 +51,6 @@ namespace AuthTestUser.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
-                columns: table => new
-                {
-                    User_ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    User_Code = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    User_Pass = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    User_FullName = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    User_Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.User_ID);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -171,6 +156,28 @@ namespace AuthTestUser.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    User_ID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    User_Code = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    User_Pass = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    User_FullName = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    User_Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.User_ID);
+                    table.ForeignKey(
+                        name: "FK_Users_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -209,6 +216,12 @@ namespace AuthTestUser.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_ApplicationUserId",
+                table: "Users",
+                column: "ApplicationUserId",
+                unique: true);
         }
 
         /// <inheritdoc />

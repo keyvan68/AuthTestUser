@@ -94,6 +94,9 @@ namespace AuthTestUser.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("User_Code")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -115,7 +118,10 @@ namespace AuthTestUser.Migrations
 
                     b.HasKey("User_ID");
 
-                    b.ToTable("Users", (string)null);
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -249,6 +255,17 @@ namespace AuthTestUser.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AuthTestUser.Entities.User", b =>
+                {
+                    b.HasOne("AuthTestUser.Entities.ApplicationUser", "ApplicationUser")
+                        .WithOne("Users")
+                        .HasForeignKey("AuthTestUser.Entities.User", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -298,6 +315,11 @@ namespace AuthTestUser.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AuthTestUser.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

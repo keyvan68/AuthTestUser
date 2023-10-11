@@ -1,4 +1,6 @@
-﻿using AuthTestUser.Entities;
+﻿using AuthTestUser.Context;
+using AuthTestUser.Entities;
+using AuthTestUser.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,8 @@ namespace AuthTestUser.IRepositories
     public interface IUserRepository : IRepository<User, Guid>
     {
         public IQueryable<User> GetAll();
+        public Boolean FindByName(string User_Code);
+        
         //bool ExistUser(string User_FullName);
 
         //bool Login(string User_FullName, string Password);
