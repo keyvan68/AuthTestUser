@@ -48,7 +48,7 @@ namespace AuthTestUser.Context
             modelBuilder.Entity<IdentityRole>().HasKey(r => r.Id);
             modelBuilder.Entity<IdentityUserRole<Guid>>().HasKey(r => new { r.UserId, r.RoleId });
             modelBuilder.Entity<IdentityUserLogin<Guid>>().HasNoKey();
-            //modelBuilder.ApplyConfiguration(new AccessConfiguration());
+            modelBuilder.Entity<IdentityUserToken<Guid>>().HasKey(t=> new {t.UserId,t.LoginProvider,t.Name});
             modelBuilder.Entity<ApplicationRole>().HasData(
             new ApplicationRole
                 {
