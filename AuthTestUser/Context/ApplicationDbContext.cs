@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.Intrinsics.X86;
 
 namespace AuthTestUser.Context
 {
@@ -38,10 +39,33 @@ namespace AuthTestUser.Context
 
 
         public DbSet<User> Users { get; set; }
-        
 
 
-        
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<IdentityUser>().HasKey(u => u.Id);
+            modelBuilder.Entity<IdentityRole>().HasKey(r => r.Id);
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasKey(r => new { r.UserId, r.RoleId });
+            modelBuilder.Entity<IdentityUserLogin<Guid>>().HasNoKey();
+            //modelBuilder.ApplyConfiguration(new AccessConfiguration());
+            modelBuilder.Entity<ApplicationRole>().HasData(
+            new ApplicationRole
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Admin",
+                    NormalizedName = "Admin".ToUpper()
+                },
+            new ApplicationRole
+            {
+                Id = Guid.NewGuid(),
+                Name = "User",
+                NormalizedName = "User".ToUpper()
+            }
+            );
+
+            //The entity type 'IdentityUserToken<Guid>' requires a primary key to be defined.If you intended to use a keyless entity type, call 'HasNoKey' in 'OnModelCreating'.For more information on keyless entity types, see https://go.microsoft.com/fwlink/?linkid=2141943.
+        }
 
 
     }
