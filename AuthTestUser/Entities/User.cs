@@ -36,7 +36,7 @@ namespace AuthTestUser.Entities
         .HasOne(u => u.User)
         .WithOne(user => user.ApplicationUser)
         .HasForeignKey<User>(user => user.ApplicationUserId);
-}
+} 
 
     }
 }
