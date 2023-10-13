@@ -80,7 +80,7 @@ public class UserController : ControllerBase
 
 
     [HttpPost, Route("StoreData")]
-    public ResultClass<Boolean> StoreData(UserViewModel UserViewModel)
+    public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
     {
 
 
@@ -90,8 +90,22 @@ public class UserController : ControllerBase
 
             if (ModelState.IsValid)
             {
+                var userAspNet = new ApplicationUser
+                {
+                    UserName = UserViewModel.User_Code, // در نظر بگیرید که نیاز به ایمیل هم دارید
+                };
+                var result = await _userManager.CreateAsync(userAspNet, UserViewModel.User_Pass);
+                if (result.Succeeded)
+                {
+                    UserViewModel.ApplicationUserId = userAspNet.Id;
+                    res = UserViewModel.StoreData();
+                }
+                else
+                {
+                    res.Errors.AddRange(result.Errors.Select(error => error.Description));
+                }
                 //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
-                res = UserViewModel.StoreData();
+
             }
             else
             {

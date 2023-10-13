@@ -30,12 +30,18 @@ namespace AuthTestUser.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=192.168.1.13\\MSSQLSERVER_IMP;Database=AuthTestUserDB;user=sa;password=2262;Encrypt=False");
+            optionsBuilder.UseSqlServer("Server=.;Initial Catalog=AuthUserTestDB;Integrated Security=True;TrustServerCertificate=True;");
         }
 
 
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
+            // اضافه کردن مقادیر به جدول AspNetRoles
+            SeedData.Initialize(modelBuilder);
+        }
 
 
 
@@ -43,14 +49,7 @@ namespace AuthTestUser.Context
 
 
 
-        //protected override void OnModelCreating(ModelBuilder modelBuilder)
-        //{
-        //    modelBuilder.Entity<ApplicationUser>()
-        //      .HasOne(u => u.Users)
-        //       .WithOne(user => user.ApplicationUser)
-        //       .HasForeignKey<User>(user => user.ApplicationUserId);
-           
-        //}
+      
 
 
     }

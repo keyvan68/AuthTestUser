@@ -28,6 +28,7 @@ namespace AuthTestUser.ViewModels.User
         [Required(ErrorMessage = " نام کاربری اجبای است")]
         public string User_FullName { get; set; }
         public string User_Role { get; set; }
+        public Guid ApplicationUserId { get; set; }
 
 
         //public string User_Role { get; set; }
@@ -92,6 +93,7 @@ namespace AuthTestUser.ViewModels.User
             user.User_Pass = this.User_Pass;
             user.User_Code = this.User_Code;
             user.User_Role = this.User_Role;
+            user.ApplicationUserId = this.ApplicationUserId;
 
 
 
