@@ -37,9 +37,14 @@ public class UserController : ControllerBase
 
 
     [HttpGet, Route("initNew")]
-    //[Authorize(Roles = "User")]
     public ResultClass<UserViewModel> initNew()
     {
+
+        //   Getff(typeof(EstekhdamiType));
+
+        //var fff = FindV(typeof(EstekhdamiType), EstekhdamiType.Paimani);
+
+
         try
         {
             UserViewModel UserViewModel = new UserViewModel();
@@ -50,7 +55,7 @@ public class UserController : ControllerBase
         catch (Exception Ex)
         {
 
-            ResultClass<UserViewModel> resultClass = new AuthTestUser.Classes.ResultClass<UserViewModel>();
+            ResultClass<UserViewModel> resultClass = new ResultClass<UserViewModel>();
             resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
 
             return resultClass;
@@ -97,15 +102,16 @@ public class UserController : ControllerBase
                 var result = await _userManager.CreateAsync(userAspNet, UserViewModel.User_Pass);
                 if (result.Succeeded)
                 {
-                    UserViewModel.ApplicationUserId = userAspNet.Id;
+                    await _userManager.AddToRoleAsync(userAspNet, UserViewModel.User_Role);
+                    UserViewModel.User_ID = userAspNet.Id;
                     res = UserViewModel.StoreData();
                 }
                 else
                 {
                     res.Errors.AddRange(result.Errors.Select(error => error.Description));
                 }
-                //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
 
+                //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
             }
             else
             {
@@ -202,42 +208,10 @@ public class UserController : ControllerBase
         try
         {
             ResultClass<Boolean> Res = new ResultClass<bool>();
-            
             Res.Result = VM.Login();
             if (Res.Result)
             {
                 Res.SetDefualtSuccessSystem();
-            } else
-            {
-                Res.Errors.Add("کاربری با این مشخصات پیدا نشد");
-            }
-            
-
-            return Res;
-
-        }
-        catch (Exception Ex)
-        {
-            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
-            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
-
-            return resultClass;
-        }
-
-
-    }
-    [HttpPost, Route("LoginV2")]
-    public async Task<ResultClass<Boolean>> LoginV2(LoginViewModel VM)
-    {
-        try
-        {
-            ResultClass<Boolean> Res = new ResultClass<bool>();
-            var result = await VM.Login1(VM);
-            if (Res.Result)
-            {
-                Res.SetDefualtSuccessSystem();
-                var user = await _userManager.FindByEmailAsync(VM.User_Code);
-                var roles = await _userManager.GetRolesAsync(user);
             }
             else
             {

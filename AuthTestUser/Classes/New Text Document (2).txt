@@ -1,0 +1,425 @@
+[HttpDelete, Route("Delete")]
+    public ResultClass<Boolean> Delete(Guid id)
+    {
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var res = UserViewModel.Delete(id);
+
+            return res;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+public ResultClass<bool> Delete(Guid id)
+        {
+            ResultClass<bool> RC = new ResultClass<bool>();
+            ApplicationDbContext applicationDbContext = new();
+
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+            var user = userRepository.Find(id);
+            if (user != null)
+            {
+                userRepository.Remove(id);
+            }
+
+            int C = applicationDbContext.SaveChanges();
+            if (C == 0)
+            {
+                RC.SetDefualtErrorSystem();
+            }
+            else
+            {
+                RC.SetDefualtSuccessSystem();
+            }
+
+            return RC;
+        }
+
+using DomainClasses.Entities;
+using DomainClasses.Configurations;
+using DomainClasses.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DomainClasses.Context
+{
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+        public ApplicationDbContext()
+        {
+
+        }
+
+
+
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer("Server=192.168.1.13\\MSSQLSERVER_IMP;Database=MPWDB;user=sa;password=2262;Encrypt=False;");
+        }
+
+
+        public DbSet<Person_tbl> Person_Tbl { get; set; }
+        //public DbSet<ConstType_tbl> ConstType_Tbl { get; set; }
+        //public DbSet<Const_tbl> Const_Tbl { get; set; }
+        public DbSet<Access_tbl> Access_Tbl { get; set; }
+        public DbSet<Bakhsh_tbl> Bakhsh_Tbl { get; set; }
+        public DbSet<City_tbl> City_Tbl { get; set; }
+        public DbSet<KarkardLock_tbl> KarkardLock_Tbl { get; set; }
+        public DbSet<KJPrice_tbl> KJPrice_tbl { get; set; }
+        public DbSet<Markaz_tbl> Markaz_Tbl { get; set; }
+        public DbSet<PersonGH_tbl> PersonGH_Tbl { get; set; }
+        public DbSet<PersonGHKJ_tbl> PersonGHKJ_Tbl { get; set; }
+        public DbSet<PersonGHRosta_tbl> PersonGHRosta_Tbl { get; set; }
+        public DbSet<Rosta_tbl> Rosta_Tbl { get; set; }
+        public DbSet<Univercity_tbl> Univercity_Tbl { get; set; }
+        public DbSet<User_tbl> User_Tbl { get; set; }
+        public DbSet<YearMonth_tbl> YearMonth_Tbl { get; set; }
+        public DbSet<Year_tbl> Year_Tbl { get; set; }
+        public DbSet<Log_tbl> Log_Tbl { get; set; }
+        public DbSet<Const_tbl> Const_tbl { get; set; }
+        public DbSet<UserAccess_tbl> UserAccess_Tbl { get; set; }
+        public DbSet<PersonGHBitoteh_tbl> PersonGHBitoteh_Tbl { get; set; }
+        public DbSet<PersonGHPayment_tbl> PersonGHPayment_Tbl { get; set; }
+        public DbSet<PersonGHAmel_tbl> PersonGHAmel_Tbl { get; set; }
+
+        public DbSet<UserCity_tbl> UserCity_tbl { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.ApplyConfiguration(new AccessConfiguration());
+            modelBuilder.ApplyConfiguration(new PersonGHBitotehConfiguration());
+            modelBuilder.ApplyConfiguration(new RostaConfiguration());
+            modelBuilder.ApplyConfiguration(new YearConfiguration());
+            modelBuilder.ApplyConfiguration(new PersonConfiguration());
+            modelBuilder.ApplyConfiguration(new PersonGHConfiguration());
+            modelBuilder.ApplyConfiguration(new UserCityConfiguration());
+
+            SeedData.Initialize(modelBuilder);
+            
+
+            modelBuilder.Entity<ApplicationUser>(entity =>
+            {
+
+                entity.HasOne(a => a.Users).WithOne(b => b.ApplicationUser)
+                .HasForeignKey<User_tbl>(b => b.User_ID).OnDelete(DeleteBehavior.Cascade);
+
+
+            });
+            modelBuilder.Entity<User_tbl>(entity =>
+            {
+
+                entity.HasMany(a => a.UserCity_Tbls).WithOne(b => b.User_tbl)
+                .HasForeignKey(b => b.User_ID).OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(a => a.ApplicationUser).WithOne(b => b.Users)
+                .OnDelete(DeleteBehavior.Cascade);
+                //.HasForeignKey<User_tbl>(b => b.User_ID).OnDelete(DeleteBehavior.Cascade);
+
+
+            });
+        }
+
+
+    }
+}
+
+
+-----------------------------
+
+
+ public class UserAccessClass
+        {
+            public int Access_ID { get; set; }
+            [Display(Name = "نام دسترسی")]
+            [Required(ErrorMessage = "لطفا {0} را وارد کنید")]
+            public string Access_Name { get; set; }
+            [Required]
+            public Boolean isChecked { get; set; }
+
+
+        }
+
+
+        public class UserCityClass
+        {
+            public Guid City_ID { get; set; }
+            [Display(Name = "نام شهر")]
+            public string City_Name { get; set; }
+            [Required]
+            public Boolean isChecked { get; set; }
+
+        }
+
+
+
+        public Guid User_ID { get; set; }
+        [Required(ErrorMessage = " کد کاربری اجبای است")]
+        public string User_Code { get; set; }
+        [Required(ErrorMessage = " رمز کاربری اجبای است")]
+        public string User_Pass { get; set; }
+        [Required(ErrorMessage = " نام کاربری اجبای است")]
+        public string User_FullName { get; set; }
+        [Required]
+        public Guid Univercity_ID { get; set; }
+
+        public string User_Role { get; set; }
+
+        public List<UserAccessClass> UserAccess { get; set; }
+
+        public List<UserCityClass> UserCity { get; set; }
+
+
+        public UserViewModel()
+        {
+            UserAccess = new List<UserAccessClass>();
+            UserCity = new List<UserCityClass>();
+        }
+
+        public ResultClass<UserViewModel> initNew()
+        {
+
+
+            ResultClass<UserViewModel> RC = new ResultClass<UserViewModel>();
+
+
+            ApplicationDbContext applicationDbContext = new();
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+            IAccessRepository accessRepository = new AccessRepository(applicationDbContext);
+            ICityRepository cityRepository = new CityRepository(applicationDbContext);
+
+            RC.Result = new UserViewModel();
+            RC.Result.User_ID = Guid.NewGuid();
+            RC.Result.Univercity_ID = CurrentDataClass.GetCurrentUniversity();
+            RC.Result.UserAccess = accessRepository.GetAll().Select(a => new UserAccessClass
+            {
+                Access_ID = a.Access_ID,
+                Access_Name = a.Access_Name,
+                isChecked = false
+
+            }).ToList();
+
+            var et = typeof(EstekhdamiTypeEnum);
+
+            //  var dddd = userRepository.GetAll().Select(x => new { ff = et.GetField(x.estekhdamiType.ToString()).GetValue("display") });
+            RC.Result.UserCity = cityRepository.GetAll().Select(a => new UserCityClass
+            {
+                City_ID = a.City_ID,
+                City_Name = a.City_Name,
+                isChecked = false
+
+
+            }).ToList();
+
+
+            return RC;
+        }
+
+
+        public ResultClass<bool> StoreData()
+        {
+            ResultClass<bool> RC = new ResultClass<bool>();
+
+
+            ApplicationDbContext applicationDbContext = new();
+
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+            ILogRepository logRepository = new LogRepository(applicationDbContext);
+            var user = userRepository.Find(this.User_ID);
+            if (user == null)
+            {
+                user = new User_tbl();
+                user.User_ID = this.User_ID;
+
+                userRepository.Add(user);
+                var Log = new Log_tbl();
+
+                Log.Log_Info = "Add user .. !!!";
+                Log.Log_IP = "127.0.0.1";
+                logRepository.WriteLog(user.User_ID, Log.Log_IP, Log.Log_Info);
+
+
+            }
+            else
+            {
+                userRepository.Update(user);
+            }
+            user.Univercity_ID = CurrentDataClass.GetCurrentUniversity();
+            user.User_FullName = this.User_FullName;
+            user.User_Pass = this.User_Pass;
+            user.User_Code = this.User_Code;
+            user.User_Role = this.User_Role;
+
+            UserAccessRepository userAccessRepository = new UserAccessRepository(applicationDbContext);
+
+            foreach (var item in this.UserAccess)
+            {
+                var useracces = userAccessRepository.GetAll().Where(x => x.User_ID == user.User_ID && x.Access_ID == item.Access_ID).SingleOrDefault();
+
+                if (item.isChecked == false)
+                {
+                    if (useracces != null) userAccessRepository.Remove(useracces);
+                    continue;
+                }
+
+                if (useracces == null)
+                {
+                    useracces = new UserAccess_tbl();
+                    useracces.UserAccess_ID = Guid.NewGuid();
+                    useracces.User_ID = user.User_ID;
+                    useracces.Access_ID = item.Access_ID;
+
+
+                    userAccessRepository.Add(useracces);
+                }
+
+
+            }
+            UserCityRepository userCityRepository = new UserCityRepository(applicationDbContext);
+            foreach (var item in this.UserCity)
+            {
+                var usercity = userCityRepository.GetAll().Where(x => x.User_ID == user.User_ID && x.City_ID == item.City_ID).SingleOrDefault();
+                if (item.isChecked == false)
+                {
+                    if (usercity != null)
+                    {
+                        userCityRepository.Remove(usercity);
+
+                    }
+
+                    continue;
+
+                }
+                if (usercity == null)
+                {
+                    usercity = new UserCity_tbl();
+                    usercity.UserCity_ID = Guid.NewGuid();
+                    usercity.User_ID = user.User_ID;
+                    usercity.City_ID = item.City_ID;
+
+                    userCityRepository.Add(usercity);
+                }
+            }
+
+            if (RC.isSuccsed == false) return RC;
+
+
+            int C = applicationDbContext.SaveChanges();
+            if (C == 0)
+            {
+                RC.SetDefualtErrorSystem();
+            }
+            else
+            {
+                RC.SetDefualtSuccessSystem();
+            }
+
+
+
+            return RC;
+        }
+
+
+        public ResultClass<UserViewModel> LoadData(Guid id)
+        {
+            ResultClass<UserViewModel> RC = new ResultClass<UserViewModel>();
+            ApplicationDbContext applicationDbContext = new();
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+            IAccessRepository accessRepository = new AccessRepository(applicationDbContext);
+            IUserAccessRepository userAccessRepository = new UserAccessRepository(applicationDbContext);
+            IUnivercityRepository univercityRepository = new UnivercityRepository(applicationDbContext);
+            IUserCityRepository userCityRepository = new UserCityRepository(applicationDbContext);
+            ICityRepository cityRepository = new CityRepository(applicationDbContext);
+
+
+            var user = userRepository.Find(id);
+            RC.Result = new UserViewModel
+            {
+                User_Code = user.User_Code,
+                User_FullName = user.User_FullName,
+                User_ID = user.User_ID,
+                User_Pass = user.User_Pass,
+                Univercity_ID = user.Univercity_ID
+
+            };
+
+
+            var userAccess_tbl = userAccessRepository.GetAll().Where(x => x.User_ID == id).ToList();
+            var access_tbl = accessRepository.GetAll().ToList();
+
+
+            RC.Result.UserAccess = (from Access in access_tbl
+                                    join userAccess in userAccess_tbl on Access.Access_ID equals userAccess.Access_ID
+                                    into UserDataAccess
+                                    from UAC in UserDataAccess.DefaultIfEmpty()
+                                    select new UserAccessClass
+                                    {
+                                        Access_ID = Access.Access_ID,
+                                        Access_Name = Access.Access_Name,
+                                        isChecked = UAC != null ? true : false
+                                    }).ToList();
+
+            var city_tbl = cityRepository.GetAll().ToList();
+            var usercity_tbl = userCityRepository.GetAll().Where(x => x.User_ID == id).ToList();
+            RC.Result.UserCity = (from City in city_tbl
+                                  join UserCityT in usercity_tbl on City.City_ID equals UserCityT.City_ID
+                                  into UserCity
+                                  from UC in UserCity.DefaultIfEmpty()
+                                  select new UserCityClass
+                                  {
+                                      City_ID = City.City_ID,
+                                      City_Name = City.City_Name,
+                                      isChecked = UC != null ? true : false
+                                  }).ToList();
+
+            return RC;
+        }
+
+        public ResultClass<bool> Delete(Guid id)
+        {
+            ResultClass<bool> RC = new ResultClass<bool>();
+            ApplicationDbContext applicationDbContext = new();
+
+            IUserRepository userRepository = new UserRepository(applicationDbContext);
+            var user = userRepository.Find(id);
+            if (user != null)
+            {
+                userRepository.Remove(id);
+            }
+
+            int C = applicationDbContext.SaveChanges();
+            if (C == 0)
+            {
+                RC.SetDefualtErrorSystem();
+            }
+            else
+            {
+                RC.SetDefualtSuccessSystem();
+            }
+
+            return RC;
+        }

@@ -28,7 +28,7 @@ namespace AuthTestUser
             //{
             //    options.AddPolicy("UserPolicy", policy =>
             //    {
-            //        policy.RequireAuthenticatedUser();
+            //        policy.RequireAuthenticatedUser(); 
             //        policy.RequireRole("User");
             //    });
             //});
