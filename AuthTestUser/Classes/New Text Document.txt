@@ -486,3 +486,61 @@ namespace Application.Controllers
         //}
     }
 }
+
+
+// در Startup.cs در ConfigureServices، UserManager را به صورت زیر تنظیم کنید:
+services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// در کنترلر Register یا در کلاسی مشابه
+public class AccountController : Controller
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+
+    public AccountController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                // در اینجا کد برای ایجاد کاربر در جدول User و منتقل کردن ApplicationUserId به آن قرار دهید
+                var newUser = new User
+                {
+                    User_Code = model.Email,
+                    User_Pass = model.Password,
+                    // دیگر فیلدهای مورد نیاز را اضافه کنید
+                    ApplicationUser = user // اتصال کاربر به جدول ApplicationUser
+                };
+
+                // ذخیره کاربر در جدول User
+                // بر اساس رابطه‌ها می‌توانید دیگر اطلاعات کاربر را اضافه کنید
+
+                _context.Users.Add(newUser);
+                _context.SaveChanges();
+
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+            }
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+        return View(model);
+    }
+}
