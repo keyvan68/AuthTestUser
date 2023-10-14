@@ -18,8 +18,8 @@ namespace AuthTestUser.Entities
         [Required]
         public string User_FullName { get; set; }
         public string User_Role { get; set; }
-        public Guid ApplicationUserId { get; set; }
-        [ForeignKey("ApplicationUserId")]
+        //public Guid ApplicationUserId { get; set; }
+        
         public ApplicationUser? ApplicationUser { get; set; }
 
         //Cannot use table 'Users' for entity type 'User' since it is being used for entity type 'ApplicationUser' and potentially other entity types, but there is no linking relationship. Add a foreign key to 'User' on the primary key properties and pointing to the primary key on another entity type mapped to 'Users'.

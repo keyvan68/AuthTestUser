@@ -12,7 +12,7 @@ using System;
 namespace AuthTestUser.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -69,10 +69,11 @@ namespace AuthTestUser.Controllers
             {
                 user = new ApplicationUser
                 {
+                    Id=Guid.NewGuid(),
                     UserName = model.User_Code,
                     Users = new User()
                     {
-                        User_ID = Guid.NewGuid(),
+                        User_ID = user.Id,
                         User_Code = model.User_Code,
                         User_Pass = model.User_Pass,
                         User_FullName = model.User_FullName,

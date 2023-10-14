@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace AuthTestUser.Migrations
 {
     /// <inheritdoc />
@@ -164,18 +166,26 @@ namespace AuthTestUser.Migrations
                     User_Code = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     User_Pass = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     User_FullName = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    User_Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    User_Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.User_ID);
                     table.ForeignKey(
-                        name: "FK_Users_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_Users_AspNetUsers_User_ID",
+                        column: x => x.User_ID,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { new Guid("5e01d060-a8ab-40bd-8cef-9abe22c2621a"), null, "Admin", "ADMIN" },
+                    { new Guid("a609706d-72eb-4f98-b174-e1e90544e0e3"), null, "User", "USER" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -216,12 +226,6 @@ namespace AuthTestUser.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_ApplicationUserId",
-                table: "Users",
-                column: "ApplicationUserId",
-                unique: true);
         }
 
         /// <inheritdoc />

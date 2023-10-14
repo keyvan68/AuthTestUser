@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthTestUser.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231013130427_init2")]
-    partial class init2
+    [Migration("20231014063127_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,10 +94,6 @@ namespace AuthTestUser.Migrations
             modelBuilder.Entity("AuthTestUser.Entities.User", b =>
                 {
                     b.Property<Guid>("User_ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("User_Code")
@@ -120,9 +116,6 @@ namespace AuthTestUser.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("User_ID");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -157,13 +150,13 @@ namespace AuthTestUser.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("b5b15d76-4e22-4d46-86e8-c3ecac18c8f5"),
+                            Id = new Guid("5e01d060-a8ab-40bd-8cef-9abe22c2621a"),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = new Guid("b80b1ff5-b134-4c31-b55a-0bc341256055"),
+                            Id = new Guid("a609706d-72eb-4f98-b174-e1e90544e0e3"),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -276,7 +269,7 @@ namespace AuthTestUser.Migrations
                 {
                     b.HasOne("AuthTestUser.Entities.ApplicationUser", "ApplicationUser")
                         .WithOne("Users")
-                        .HasForeignKey("AuthTestUser.Entities.User", "ApplicationUserId")
+                        .HasForeignKey("AuthTestUser.Entities.User", "User_ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
