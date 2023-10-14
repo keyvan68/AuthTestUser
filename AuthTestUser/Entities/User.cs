@@ -18,7 +18,6 @@ namespace AuthTestUser.Entities
         [Required]
         public string User_FullName { get; set; }
         public string User_Role { get; set; }
-        //public Guid ApplicationUserId { get; set; }
         
         public ApplicationUser? ApplicationUser { get; set; }
 
