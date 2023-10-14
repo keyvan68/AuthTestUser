@@ -222,3 +222,145 @@ Response headers
  date: Sat,14 Oct 2023 09:01:13 GMT 
  server: Kestrel 
  transfer-encoding: chunked -----------
+
+ program web api 
+ using Application.Classes;
+using DataLayer.Classes;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Text;
+using DomainClasses.Context;
+using Microsoft.EntityFrameworkCore;
+using DomainClasses.Entities;
+using Microsoft.AspNetCore.Identity;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
+
+#region Jwt
+
+//var JwtSettingSection = builder.Configuration.GetSection("JWTSettings");
+//builder.Services.Configure<JWTSettings>(JwtSettingSection);
+
+//var jwtsetting = JwtSettingSection.Get<JWTSettings>();
+//var key = Encoding.ASCII.GetBytes(jwtsetting.Secret);
+
+//builder.Services.AddAuthentication(a =>
+//{
+//    a.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+//    a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//}).AddJwtBearer(option =>
+//{
+//    option.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        IssuerSigningKey = new SymmetricSecurityKey(key),
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = jwtsetting.Issure,
+//        ValidateIssuer = true,
+//        ValidAudience = jwtsetting.Audience,
+//        ValidateAudience = true,
+//        ValidateLifetime = true
+
+//    };
+//});
+
+//builder.Services.AddDbContext<ApplicationDbContext>();
+
+
+#endregion
+var app = builder.Build();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor
+});
+// Configure the HTTP request pipeline.
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+//app.UseAuthentication();
+//app.UseAuthorization();
+
+//using var scope = app.Services.CreateScope();
+//var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//dbContext.Database.Migrate();
+
+app.MapControllers();
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+app.Run();
+
+
+program userlayer
+
+
+using AuthTestUser.Entities;
+using DomainClasses.Context;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<ApplicationDbContext>();
+builder.Services.AddCors();
+
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(
+    options =>
+    {
+
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 4;
+        options.Password.RequireNonAlphanumeric = false;
+
+    }
+    )
+.AddEntityFrameworkStores<ApplicationDbContext>();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+}
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+dbContext.Database.Migrate();
+
+
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}");
+
+app.MapFallbackToFile("index.html");
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+app.Run();
