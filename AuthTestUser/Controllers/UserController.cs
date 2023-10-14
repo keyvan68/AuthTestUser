@@ -104,7 +104,7 @@ public class UserController : ControllerBase
                 {
                     await _userManager.AddToRoleAsync(userAspNet, UserViewModel.User_Role);
                     UserViewModel.User_ID = userAspNet.Id;
-                    res = UserViewModel.StoreData();
+                   // res = UserViewModel.StoreData();
                 }
                 else
                 {

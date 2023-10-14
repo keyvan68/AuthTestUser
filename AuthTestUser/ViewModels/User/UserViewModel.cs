@@ -66,7 +66,7 @@ namespace AuthTestUser.ViewModels.User
         }
 
 
-        public ResultClass<bool> StoreData()
+        public async Task<ResultClass<bool>> StoreData()
         {
             ResultClass<bool> RC = new ResultClass<bool>();
 
@@ -74,7 +74,7 @@ namespace AuthTestUser.ViewModels.User
             ApplicationDbContext applicationDbContext = new();
 
             IUserRepository userRepository = new UserRepository(applicationDbContext);
-           
+            var userAspNet = await _userManager.FindByIdAsync(this.User_ID.ToString());
             var user = userRepository.Find(this.User_ID);
             if (user == null)
             {
@@ -87,6 +87,7 @@ namespace AuthTestUser.ViewModels.User
             }
             else
             {
+
                 userRepository.Update(user);
             }
             user.User_FullName = this.User_FullName;
