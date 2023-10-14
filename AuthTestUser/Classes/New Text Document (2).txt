@@ -520,7 +520,7 @@ public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
 
         return res;
     }
-    catch (Exception Ex)
+    catch (Exception Ex) 
     {
         ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
         resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
