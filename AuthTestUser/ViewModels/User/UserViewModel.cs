@@ -79,7 +79,7 @@ namespace AuthTestUser.ViewModels.User
             if (user == null)
             {
                 user = new AuthTestUser.Entities.User();
-                user.User_ID = this.ApplicationUserId;
+                user.User_ID = this.User_ID;
 
                 userRepository.Add(user);
 

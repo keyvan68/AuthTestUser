@@ -422,4 +422,113 @@ namespace DomainClasses.Context
             }
 
             return RC;
+
         }
+
+
+
+        -----------------------------------++++++++++++
+
+         ASP.NET Identity، پاک کردن کاربر از جدول AspNetUsers به طور پیش‌فرض به همراه پاک کردن کاربر از جدول AspNetUserRoles و جدول‌های دیگر انجام می‌شود. برای انجام این کار، شما به UserManager دسترسی دارید. اگر می‌خواهید اطلاعات کاربر از جدول User نیز پاک نشود، باید به صورت دستی کاربر را از جدول User حذف کنید.
+
+برای انجام این کار، شما می‌توانید در اکشن Delete کنترلر UserController پس از حذف کاربر از جدول User، کاربر را از جدول AspNetUsers نیز با استفاده از UserManager حذف کنید. مثلا:
+
+csharp
+Copy code
+[HttpDelete, Route("Delete")]
+public async Task<ResultClass<Boolean> Delete(Guid id)
+{
+    try
+    {
+        UserViewModel UserViewModel = new UserViewModel();
+        var user = UserViewModel.LoadData(id).Result;
+        var res = UserViewModel.Delete(id);
+
+        if (user != null)
+        {
+            // حذف کاربر از جدول User
+            var userAspNet = await _userManager.FindByIdAsync(user.ApplicationUserId.ToString());
+            if (userAspNet != null)
+            {
+                await _userManager.DeleteAsync(userAspNet);
+            }
+        }
+
+        return res;
+    }
+    catch (Exception Ex)
+    {
+        ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+        resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+        return resultClass;
+    }
+}
+در این مثال، بعد از حذف کاربر از جدول User، ما کاربر متناظر را در جدول AspNetUsers با استفاده از UserManager پیدا کرده و حذف کرده‌ایم. این کار باعث می‌شود که کاربر همزمان از هر دو جدول پاک شود.
+
+
+
+
+User
+edit من از طریق storedata انجام میشه تو ویو مدل میتونی برای edit هم کمک کنی
+ChatGPT
+برای انجام ویرایش کاربر از طریق StoreData، می‌توانید در اکشن StoreData کنترلر UserController به جای ایجاد یک کاربر جدید با استفاده از CreateAsync، ابتدا کاربر موجود را با استفاده از FindByIdAsync پیدا کنید و سپس اطلاعات ویرایش شده را به ویژگی‌های کاربر اعمال کنید و با استفاده از UpdateAsync ویرایش کنید. اینجا نحوه انجام این کار را نشان می‌دهد:
+
+csharp
+Copy code
+[HttpPost, Route("StoreData")]
+public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
+{
+    try
+    {
+        ResultClass<Boolean> res = new ResultClass<bool>();
+
+        if (ModelState.IsValid)
+        {
+            // پیدا کردن کاربر موجود با استفاده از ID
+            var userAspNet = await _userManager.FindByIdAsync(UserViewModel.ApplicationUserId.ToString());
+
+            if (userAspNet != null)
+            {
+                // اعمال تغییرات به ویژگی‌های کاربر
+                userAspNet.UserName = UserViewModel.User_Code;
+                userAspNet.PasswordHash = UserViewModel.User_Pass; // برای اعمال رمز عبور
+                await _userManager.AddToRoleAsync(userAspNet, UserViewModel.User_Role);
+
+                // ویرایش کاربر در جدول AspNetUsers
+                var updateResult = await _userManager.UpdateAsync(userAspNet);
+                if (updateResult.Succeeded)
+                {
+                    // ویرایش کاربر در جدول User
+                    res = UserViewModel.StoreData();
+                }
+                else
+                {
+                    res.Errors.AddRange(updateResult.Errors.Select(error => error.Description));
+                }
+            }
+            else
+            {
+                res.Errors.Add("کاربر مورد نظر یافت نشد.");
+            }
+        }
+        else
+        {
+            var errors = ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                .Select(m => m.ErrorMessage).ToList();
+            res.SetError(errors);
+        }
+
+        return res;
+    }
+    catch (Exception Ex)
+    {
+        ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+        resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+        return resultClass;
+    }
+}
+در این مثال، ابتدا کاربر موجود با استفاده از FindByIdAsync پیدا می‌شود. سپس تغییرات مورد نیاز روی کاربر اعمال می‌شود و با استفاده از UpdateAsync کاربر ویرایش می‌شود. سپس اطلاعات ویرایش شده در جدول User نیز با استفاده از متد StoreData اعمال می‌شوند.
+
+
+
+
