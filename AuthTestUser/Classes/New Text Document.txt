@@ -1231,3 +1231,277 @@ namespace DomainClasses.Context
 
     }
 }
+
+
+
+using Application;
+using Application.Classes;
+using Application.ViewModels.Access;
+using Application.ViewModels.Markaz;
+using Application.ViewModels.User;
+using DataLayer.Classes;
+using DomainClasses.Entities;
+using DomainClasses.Enums;
+using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Contracts;
+using System.Net.WebSockets;
+using System.Security.AccessControl;
+using static Application.ViewModels.User.UserListCondViewModel;
+
+namespace webapi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class UserController : ControllerBase
+{
+
+    private readonly ILogger<UserController> _logger;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+
+    public UserController(ILogger<UserController> logger, SignInManager<ApplicationUser> signInManager = null, UserManager<ApplicationUser> userManager = null)
+    {
+        _logger = logger;
+        _signInManager = signInManager;
+        _userManager = userManager;
+    }
+
+
+
+    [HttpGet, Route("initNew")]
+    public ResultClass<UserViewModel> initNew()
+    {
+
+        //   Getff(typeof(EstekhdamiType));
+
+        //var fff = FindV(typeof(EstekhdamiType), EstekhdamiType.Paimani);
+
+
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var obj = UserViewModel.initNew();
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+
+            ResultClass<UserViewModel> resultClass = new Application.Classes.ResultClass<UserViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+
+
+    [HttpGet, Route("Edit")]
+    public async Task<ResultClass<UserViewModel>> Edit(Guid id)
+    {
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var obj = UserViewModel.LoadData(id);
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<UserViewModel> resultClass = new ResultClass<UserViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+
+    [HttpPost, Route("StoreData")]
+    public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
+    {
+        
+        try
+        {
+            ResultClass<Boolean> res = new ResultClass<bool>();
+
+            if (ModelState.IsValid)
+            {
+                var userAspNet = new ApplicationUser
+                {
+                    UserName = UserViewModel.User_Code,
+                };
+                var result = await _userManager.CreateAsync(userAspNet, UserViewModel.User_Pass);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(userAspNet, UserViewModel.User_Role);
+                    UserViewModel.User_ID = userAspNet.Id;
+                    res = UserViewModel.StoreData();
+                }
+                else
+                {
+                    res.Errors.AddRange(result.Errors.Select(error => error.Description));
+                }
+
+                //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            }
+            else
+            {
+                var errors = ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                    .Select(m => m.ErrorMessage).ToList();
+                res.SetError(errors);
+
+            }
+
+            return res;
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+
+    }
+
+    [HttpDelete, Route("Delete")]
+    public async Task<ResultClass<Boolean>> Delete(Guid id)
+    {
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var user = UserViewModel.LoadData(id).Result;
+            var res = UserViewModel.Delete(id);
+            if (user != null)
+            {
+                // حذف کاربر از جدول User
+                var userAspNet = await _userManager.FindByIdAsync(user.User_ID.ToString());
+                if (userAspNet != null)
+                {
+                    await _userManager.DeleteAsync(userAspNet);
+                }
+            }
+
+            return res;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpGet, Route("InitGetList")]
+    public ResultClass<UserListCondViewModel> InitGetList()
+    {
+        try
+        {
+            ResultClass<UserListCondViewModel> resultClass = new ResultClass<UserListCondViewModel>();
+
+            UserListCondViewModel UserViewModel = new UserListCondViewModel();
+            UserViewModel.New();
+            resultClass.SetDefualtSuccessSystem();
+
+            return resultClass;
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<UserListCondViewModel> resultClass = new ResultClass<UserListCondViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+    [HttpPost, Route("GetList")]
+    public ResultClass<List<UserListCondViewModel.UserListClass>> GetList(UserListCondViewModel UserViewModel)
+    {
+        // 
+        try
+        {
+            var user = UserViewModel.GetAll();
+            return user;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<List<UserListCondViewModel.UserListClass>> resultClass = new ResultClass<List<UserListCondViewModel.UserListClass>>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+
+    [HttpPost, Route("Login")]
+    public ResultClass<Boolean> Login(LoginViewModel VM)
+    {
+        try
+        {
+            ResultClass<Boolean> Res = new ResultClass<bool>();
+            Res.Result = VM.Login();
+            if (Res.Result)
+            {
+                Res.SetDefualtSuccessSystem();
+            }
+            else
+            {
+                Res.Errors.Add("کاربری با این مشخصات پیدا نشد");
+            }
+
+
+            return Res;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpGet, Route("Logout")]
+    public ResultClass<Boolean> Logout()
+    {
+        try
+        {
+            ResultClass<Boolean> Res = new ResultClass<bool>();
+            Res.Result = true;
+            Res.SetDefualtSuccessSystem();
+
+            return Res;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+
+
+}
