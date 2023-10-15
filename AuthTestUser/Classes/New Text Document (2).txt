@@ -532,3 +532,235 @@ public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
 
 
 
+==============
+
+using DomainClasses.IRepositories;
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Web;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace Application.Classes
+{
+    public class CustomAuthorizeAttribute : TypeFilterAttribute
+    {
+        public CustomAuthorizeAttribute(int AccessLstID) : base(typeof(ClaimRequirementFilter))
+        {
+            Arguments = new object[] { AccessLstID };
+        }
+    }
+
+    public class ClaimRequirementFilter : IAuthorizationFilter
+    {
+        //  readonly Claim _claim;
+        readonly int _AccessLstID;
+
+        public ClaimRequirementFilter(int AccessLstID)
+        {
+            _AccessLstID = AccessLstID;
+        }
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            if (_AccessLstID == 0)
+            {
+                context.Result = new ForbidResult();
+                return;
+            }
+
+            context.Result = new ForbidResult();
+
+            //ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+            //AccessRepository accessRepository = new AccessRepository(applicationDbContext);
+            //accessRepository.GetAll();
+
+            //Boolean authorize = unitOfWork.AccessLstRepository.isCheck(_AccessLstID);
+            //if (authorize == false)
+            //{
+            //    context.Result = new ForbidResult();
+            //}
+
+            return;
+        }
+    }
+
+
+    //public class CustomAuthorizeAttribute2 : IAuthorizationFilter
+    //{
+
+    //    public CustomAuthorizeAttribute2()
+    //    {
+
+    //    }
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        int i = 0;
+
+
+    //        return;
+    //        //context.Result = new ForbidResult();
+
+    //       // context.Result = new HttpUnauthorizedResult();
+    //    }
+    //}
+
+
+
+    //public class MinimumAgeAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    const string POLICY_PREFIX = "MinimumAge";
+    //    int Age;
+    //    public MinimumAgeAuthorizeAttribute(int age)
+    //    {
+    //        Age = age;
+    //    }
+
+
+    //    //public MinimumAgeAuthorizeAttribute(int age) => Age = age;
+
+    //    //// Get or set the Age property by manipulating the underlying Policy property
+    //    //public int Age
+    //    //{
+    //    //    get
+    //    //    {
+    //    //        if (int.TryParse(Policy.Substring(POLICY_PREFIX.Length), out var age))
+    //    //        {
+    //    //            return age;
+    //    //        }
+    //    //        return default(int);
+    //    //    }
+    //    //    set
+    //    //    {
+    //    //        Policy = $"{POLICY_PREFIX}{value.ToString()}";
+    //    //    }
+    //    //}
+    //}
+
+
+
+    //public class CustomAuthorizeAttribute : IAuthorizationFilter
+    //{
+
+
+
+    //    // DebugOptions debugOptions;
+    //    //IOptions<DebugOptions> option
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+
+    //        // this.debugOptions = option.Value;
+    //    }
+
+
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        context.Result = new ForbidResult();
+
+    //        //if (!this.debugOptions.EnableDebugEndpoints)
+    //        //{
+
+    //        //}
+    //    }
+    //}
+
+    //public class CustomAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    //private Entities db = new Entities();
+
+    //    IUnitOfWork unitOfWork = new UnitOfWork();
+
+    //    //   NezamDB_EmptyEntities context = new NezamDB_EmptyEntities(); // my entity  
+    //    private readonly int AccessLstID;
+    //    Boolean isLogin = false;
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+    //        this.AccessLstID = AccessLstID;
+
+    //        //   this.Policy = "Access";
+
+    //    }
+    //    public Boolean AuthorizeAttribute()
+    //    {
+    //        bool authorize = false;
+
+
+    //        Guid UserID = CurrentData.GetCurrentUser();
+
+    //        if (UserID == Guid.Empty)
+    //        {
+    //            isLogin = false;
+    //            return false;
+    //        }
+
+    //        isLogin = true;
+
+    //        if (AccessLstID == 0) return true; // is Home Page // just for Common/Home/inndex
+
+
+    //        authorize = unitOfWork.AccessLstRepository.isCheck(AccessLstID);
+
+
+    //        try
+    //        {
+    //            unitOfWork.UserOnlineRepository.SaveCurrentUserOnline();
+
+    //            if (AccessLstID > 0)
+    //            {
+
+    //                var AccessLst = unitOfWork.AccessLstRepository.Find(AccessLstID);
+
+    //                dynamic expando = new ExpandoObject();
+    //                expando.FormName = AccessLst.AccessLst_Name;
+    //                expando.GroupName = AccessLst.AccessLst_MenuGroupName1;
+
+    //                unitOfWork.LogRepository.AddLog(expando, Guid.Parse(ConstIDs.Const_EventLogType_EnterInForm), null);
+    //            }
+
+
+    //            string EM;
+    //            unitOfWork.Commit(out EM);
+    //        }
+    //        catch (Exception Ex)
+    //        {
+
+    //        }
+
+
+    //        return authorize;
+    //    }
+    //    //protected override void HandleUnauthorizedRequest(ActionContext filterContext)
+    //    //{
+    //    //    if (isLogin == false)
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Account/Login");
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Common/Shared/NotHavePermission");
+    //    //    }
+    //    //}
+
+    //    //public override void OnAuthorization(AuthorizationContext filterContext)
+    //    //{
+
+    //    //    if (this.AuthorizeCore(filterContext.HttpContext) == false)
+    //    //    {
+    //    //        this.HandleUnauthorizedRequest(filterContext);
+    //    //    }
+
+    //    //}
+
+    //}
+
+}
