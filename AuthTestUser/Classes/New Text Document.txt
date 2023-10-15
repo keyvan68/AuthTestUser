@@ -1521,7 +1521,7 @@ public class UserController : ControllerBase
             Res.Result = user != null; 
             if (Res.Result)
             {
-                var claims = new List<Claim>
+                var claims = new List<Claim> 
                         {
                             new Claim(ClaimTypes.Name, user.User_ID.ToString()),
                             new Claim("FullUserName", user.User_FullName),
