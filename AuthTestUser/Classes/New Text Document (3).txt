@@ -1,0 +1,769 @@
+using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+
+
+
+
+namespace DataLayer.Cookies
+{
+    public interface IUserService
+    {
+        ClaimsPrincipal GetUser();
+    }
+
+    public class UserService : IUserService
+    {
+        private readonly IHttpContextAccessor _accessor;
+
+        public UserService(IHttpContextAccessor accessor)
+        {
+            _accessor = accessor;
+        }
+
+        public ClaimsPrincipal GetUser()
+        {
+            //_accessor.Context?.User;
+            return _accessor?.HttpContext?.User as ClaimsPrincipal;
+        }
+    }
+
+    public static class CurrentData
+    {
+        public static Guid GetCurrentUser()
+        {
+            IHttpContextAccessor HCA = new HttpContextAccessor();
+
+            IUserService userService = new UserService(HCA);
+            var US = userService.GetUser();
+
+            string UserIDString = US.Identity.Name; // "3AA19DD8-6AB6-4A40-B6BF-9F0CE0B04BEF"; // System.Web.HttpContext.Current.User.Identity.Name;
+            Guid UserID;
+
+            if (Guid.TryParse(UserIDString, out UserID) == false)
+            {
+                
+            }
+            return UserID;
+        }
+
+        public static Guid GetCurrentUniversity()
+        {
+            var Number = "9351a62a-3678-4b26-93df-08dbcc8afdaa";
+            return Guid.Parse(Number);
+        }
+
+        //public static VersionEnum GetLastVersion()
+        //{
+        //    return VersionEnum.Version22;
+        //}
+
+
+
+        //public static Guid? GetCurrentPerson()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+
+        //    var User = unitOfWork.UserRepository.Find(UserID);
+        //    Guid? Person_ID = null;
+
+        //    if (User != null)
+        //        Person_ID = unitOfWork.UserRepository.Find(UserID).Person_ID;
+
+
+        //    return Person_ID;
+        //}
+
+        //public static Guid? GetCurrentSematSazemaniID()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid? SematSazemani_ID = unitOfWork.UserRepository.Find(UserID).SematSazemani_ID;
+
+
+        //    return SematSazemani_ID;
+        //}
+
+        //public static string GetCurrentSematSazemaniName()
+        //{
+        //    var ID = GetCurrentSematSazemaniID();
+        //    if (ID == null) return null;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    string SematSazemani_Name = unitOfWork.SematSazemaniRepository.Find(ID.Value).SematSazemani_Name;
+
+        //    return SematSazemani_Name;
+        //}
+
+
+
+        //public static Guid GetCurrentSubsystem()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid SubSystemID = unitOfWork.UserRepository.Find(UserID).SubSystem_ActiveID;
+
+        //    return SubSystemID;
+        //}
+        //public static Guid GetCurrentCustomer()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid UserID = GetCurrentUser();
+
+        ////    unitOfWork.UserRepository.GetAll().Include(x => x.SubSystem_tbl);
+
+        //    User_tbl user = unitOfWork.UserRepository.Find(UserID);
+
+
+        //    Guid Customer_ID = unitOfWork.UserRepository.Find(UserID).SubSystem_tbl.Customer_ID;
+        //    return Customer_ID;
+        //}
+
+
+
+
+
+        //public static int GetActiveMaliYear()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid USERID = GetCurrentUser();
+
+        //    int? ActiveYear = unitOfWork.UserRepository.Find(USERID).User_ActiveYear;
+        //    if (ActiveYear == null)
+        //    {
+        //        ActiveYear = unitOfWork.DateRepository.GetPersianDateYear();
+        //    }
+
+        //    return ActiveYear.Value;
+        //}
+
+        //public static string GetCurrentUserName()
+        //{
+        //    Guid UserID = GetCurrentUser();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string UserName= unitOfWork.UserRepository.Find(UserID).User_FullName;
+
+        //    return UserName;
+
+        //}
+
+        //public static string GetCurrentCustomerName()
+        //{
+        //    Guid CustomerID = GetCurrentCustomer();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string CustomerName = unitOfWork.CustomerRepository.Find(CustomerID).Customer_Name;
+
+        //    return CustomerName;
+
+        //}
+
+        //public static string GetCurrentSubsystemName()
+        //{
+        //    Guid SubSystemID = GetCurrentSubsystem();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string SubSystemName = unitOfWork.SubsystemRepository.Find(SubSystemID).SubSystem_Name;
+
+        //    return SubSystemName;
+
+        //}
+
+
+
+        //public static string GetCurrentPersonName()
+        //{
+        //    Guid? PersonID = GetCurrentPerson();
+
+        //    if (PersonID == null) return string.Empty;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string PersonFullName = unitOfWork.PersonRepository.Find(PersonID.Value).PersonFullName;
+
+        //    return PersonFullName;
+
+        //}
+
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+==============================
+
+
+using DomainClasses.Entities;
+using DomainClasses.Context;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using DataLayer.Cookies;
+using Microsoft.AspNetCore.Http.Features;
+
+var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o => o.LoginPath = new PathString("/Account/login"));
+
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+});
+
+
+builder.Services.AddCors(o => o.AddPolicy("AllowAllOrigins", builder =>
+{
+    builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+
+
+}));
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueCountLimit = int.MaxValue;
+    options.BufferBodyLengthLimit = Int64.MaxValue;
+    options.ValueLengthLimit = int.MaxValue;
+    options.KeyLengthLimit = int.MaxValue;
+});
+
+
+
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUserService, UserService>();
+
+builder.Services.AddDistributedMemoryCache();
+
+
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<ApplicationDbContext>();
+builder.Services.AddCors();
+
+
+//builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(
+//    options =>
+//    {
+
+//        options.Password.RequireLowercase = false;
+//        options.Password.RequireUppercase = false;
+//        options.Password.RequireDigit = false;
+//        options.Password.RequiredLength = 4;
+//        options.Password.RequireNonAlphanumeric = false;
+
+//    }
+//    )
+//.AddEntityFrameworkStores<ApplicationDbContext>();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+}
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+dbContext.Database.Migrate();
+
+
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseCors("AllowAllOrigins");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}");
+
+app.UseSession();
+
+app.MapFallbackToFile("index.html");
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+app.Run();
+===============
+
+
+using DomainClasses.IRepositories;
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Web;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace Application.Classes
+{
+    public class CustomAuthorizeAttribute : TypeFilterAttribute
+    {
+        public CustomAuthorizeAttribute(int AccessLstID) : base(typeof(ClaimRequirementFilter))
+        {
+            Arguments = new object[] { AccessLstID };
+        }
+    }
+
+    public class ClaimRequirementFilter : IAuthorizationFilter
+    {
+        //  readonly Claim _claim;
+        readonly int _AccessLstID;
+
+        public ClaimRequirementFilter(int AccessLstID)
+        {
+            _AccessLstID = AccessLstID;
+        }
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            if (_AccessLstID == 0)
+            {
+                context.Result = new ForbidResult();
+                return;
+            }
+
+
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            Boolean authorize = userRepository.isHasAccess(_AccessLstID);
+
+            AccessRepository accessRepository = new AccessRepository(applicationDbContext);
+            if (authorize == false)
+            {
+                context.Result = new ForbidResult();
+            }
+
+            return;
+        }
+    }
+
+
+    //public class CustomAuthorizeAttribute2 : IAuthorizationFilter
+    //{
+
+    //    public CustomAuthorizeAttribute2()
+    //    {
+
+    //    }
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        int i = 0;
+
+
+    //        return;
+    //        //context.Result = new ForbidResult();
+
+    //       // context.Result = new HttpUnauthorizedResult();
+    //    }
+    //}
+
+
+
+    //public class MinimumAgeAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    const string POLICY_PREFIX = "MinimumAge";
+    //    int Age;
+    //    public MinimumAgeAuthorizeAttribute(int age)
+    //    {
+    //        Age = age;
+    //    }
+
+
+    //    //public MinimumAgeAuthorizeAttribute(int age) => Age = age;
+
+    //    //// Get or set the Age property by manipulating the underlying Policy property
+    //    //public int Age
+    //    //{
+    //    //    get
+    //    //    {
+    //    //        if (int.TryParse(Policy.Substring(POLICY_PREFIX.Length), out var age))
+    //    //        {
+    //    //            return age;
+    //    //        }
+    //    //        return default(int);
+    //    //    }
+    //    //    set
+    //    //    {
+    //    //        Policy = $"{POLICY_PREFIX}{value.ToString()}";
+    //    //    }
+    //    //}
+    //}
+
+
+
+    //public class CustomAuthorizeAttribute : IAuthorizationFilter
+    //{
+
+
+
+    //    // DebugOptions debugOptions;
+    //    //IOptions<DebugOptions> option
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+
+    //        // this.debugOptions = option.Value;
+    //    }
+
+
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        context.Result = new ForbidResult();
+
+    //        //if (!this.debugOptions.EnableDebugEndpoints)
+    //        //{
+
+    //        //}
+    //    }
+    //}
+
+    //public class CustomAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    //private Entities db = new Entities();
+
+    //    IUnitOfWork unitOfWork = new UnitOfWork();
+
+    //    //   NezamDB_EmptyEntities context = new NezamDB_EmptyEntities(); // my entity  
+    //    private readonly int AccessLstID;
+    //    Boolean isLogin = false;
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+    //        this.AccessLstID = AccessLstID;
+
+    //        //   this.Policy = "Access";
+
+    //    }
+    //    public Boolean AuthorizeAttribute()
+    //    {
+    //        bool authorize = false;
+
+
+    //        Guid UserID = CurrentData.GetCurrentUser();
+
+    //        if (UserID == Guid.Empty)
+    //        {
+    //            isLogin = false;
+    //            return false;
+    //        }
+
+    //        isLogin = true;
+
+    //        if (AccessLstID == 0) return true; // is Home Page // just for Common/Home/inndex
+
+
+    //        authorize = unitOfWork.AccessLstRepository.isCheck(AccessLstID);
+
+
+    //        try
+    //        {
+    //            unitOfWork.UserOnlineRepository.SaveCurrentUserOnline();
+
+    //            if (AccessLstID > 0)
+    //            {
+
+    //                var AccessLst = unitOfWork.AccessLstRepository.Find(AccessLstID);
+
+    //                dynamic expando = new ExpandoObject();
+    //                expando.FormName = AccessLst.AccessLst_Name;
+    //                expando.GroupName = AccessLst.AccessLst_MenuGroupName1;
+
+    //                unitOfWork.LogRepository.AddLog(expando, Guid.Parse(ConstIDs.Const_EventLogType_EnterInForm), null);
+    //            }
+
+
+    //            string EM;
+    //            unitOfWork.Commit(out EM);
+    //        }
+    //        catch (Exception Ex)
+    //        {
+
+    //        }
+
+
+    //        return authorize;
+    //    }
+    //    //protected override void HandleUnauthorizedRequest(ActionContext filterContext)
+    //    //{
+    //    //    if (isLogin == false)
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Account/Login");
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Common/Shared/NotHavePermission");
+    //    //    }
+    //    //}
+
+    //    //public override void OnAuthorization(AuthorizationContext filterContext)
+    //    //{
+
+    //    //    if (this.AuthorizeCore(filterContext.HttpContext) == false)
+    //    //    {
+    //    //        this.HandleUnauthorizedRequest(filterContext);
+    //    //    }
+
+    //    //}
+
+    //}
+
+}
+
+====================
+
+ public Boolean isHasAccess(int accessID)
+        {
+            var userID = CurrentData.GetCurrentUser();
+            UserAccessRepository userAccessRepository = new UserAccessRepository(ApplicatiobContex);
+
+            return userAccessRepository.GetAll().Where(x => x.User_ID == userID && x.Access_ID == accessID).Any();
+
+        }
+
+
+        =======================
+
+        using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+
+
+
+
+namespace DataLayer.Cookies
+{
+    public interface IUserService
+    {
+        ClaimsPrincipal GetUser();
+    }
+
+    public class UserService : IUserService
+    {
+        private readonly IHttpContextAccessor _accessor;
+
+        public UserService(IHttpContextAccessor accessor)
+        {
+            _accessor = accessor;
+        }
+
+        public ClaimsPrincipal GetUser()
+        {
+            //_accessor.Context?.User;
+            return _accessor?.HttpContext?.User as ClaimsPrincipal;
+        }
+    }
+
+    public static class CurrentData
+    {
+        public static Guid GetCurrentUser()
+        {
+            IHttpContextAccessor HCA = new HttpContextAccessor();
+
+            IUserService userService = new UserService(HCA);
+            var US = userService.GetUser();
+
+            string UserIDString = US.Identity.Name; // "3AA19DD8-6AB6-4A40-B6BF-9F0CE0B04BEF"; // System.Web.HttpContext.Current.User.Identity.Name;
+            Guid UserID;
+
+            if (Guid.TryParse(UserIDString, out UserID) == false)
+            {
+                
+            }
+            return UserID;
+        }
+
+        public static Guid GetCurrentUniversity()
+        {
+            var Number = "9351a62a-3678-4b26-93df-08dbcc8afdaa";
+            return Guid.Parse(Number);
+        }
+
+        //public static VersionEnum GetLastVersion()
+        //{
+        //    return VersionEnum.Version22;
+        //}
+
+
+
+        //public static Guid? GetCurrentPerson()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+
+        //    var User = unitOfWork.UserRepository.Find(UserID);
+        //    Guid? Person_ID = null;
+
+        //    if (User != null)
+        //        Person_ID = unitOfWork.UserRepository.Find(UserID).Person_ID;
+
+
+        //    return Person_ID;
+        //}
+
+        //public static Guid? GetCurrentSematSazemaniID()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid? SematSazemani_ID = unitOfWork.UserRepository.Find(UserID).SematSazemani_ID;
+
+
+        //    return SematSazemani_ID;
+        //}
+
+        //public static string GetCurrentSematSazemaniName()
+        //{
+        //    var ID = GetCurrentSematSazemaniID();
+        //    if (ID == null) return null;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    string SematSazemani_Name = unitOfWork.SematSazemaniRepository.Find(ID.Value).SematSazemani_Name;
+
+        //    return SematSazemani_Name;
+        //}
+
+
+
+        //public static Guid GetCurrentSubsystem()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid SubSystemID = unitOfWork.UserRepository.Find(UserID).SubSystem_ActiveID;
+
+        //    return SubSystemID;
+        //}
+        //public static Guid GetCurrentCustomer()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid UserID = GetCurrentUser();
+
+        ////    unitOfWork.UserRepository.GetAll().Include(x => x.SubSystem_tbl);
+
+        //    User_tbl user = unitOfWork.UserRepository.Find(UserID);
+
+
+        //    Guid Customer_ID = unitOfWork.UserRepository.Find(UserID).SubSystem_tbl.Customer_ID;
+        //    return Customer_ID;
+        //}
+
+
+
+
+
+        //public static int GetActiveMaliYear()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid USERID = GetCurrentUser();
+
+        //    int? ActiveYear = unitOfWork.UserRepository.Find(USERID).User_ActiveYear;
+        //    if (ActiveYear == null)
+        //    {
+        //        ActiveYear = unitOfWork.DateRepository.GetPersianDateYear();
+        //    }
+
+        //    return ActiveYear.Value;
+        //}
+
+        //public static string GetCurrentUserName()
+        //{
+        //    Guid UserID = GetCurrentUser();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string UserName= unitOfWork.UserRepository.Find(UserID).User_FullName;
+
+        //    return UserName;
+
+        //}
+
+        //public static string GetCurrentCustomerName()
+        //{
+        //    Guid CustomerID = GetCurrentCustomer();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string CustomerName = unitOfWork.CustomerRepository.Find(CustomerID).Customer_Name;
+
+        //    return CustomerName;
+
+        //}
+
+        //public static string GetCurrentSubsystemName()
+        //{
+        //    Guid SubSystemID = GetCurrentSubsystem();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string SubSystemName = unitOfWork.SubsystemRepository.Find(SubSystemID).SubSystem_Name;
+
+        //    return SubSystemName;
+
+        //}
+
+
+
+        //public static string GetCurrentPersonName()
+        //{
+        //    Guid? PersonID = GetCurrentPerson();
+
+        //    if (PersonID == null) return string.Empty;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string PersonFullName = unitOfWork.PersonRepository.Find(PersonID.Value).PersonFullName;
+
+        //    return PersonFullName;
+
+        //}
+
+
+
+    }
+
+
+}
