@@ -1620,3 +1620,226 @@ public class UserController : ControllerBase
                 return resultClass;
             }
         }
+
+
+
+
+        0000000000000000000000000000
+
+        using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace DataLayer.Cookies
+{
+    public interface IUserService
+    {
+        ClaimsPrincipal GetUser();
+    }
+
+    public class UserService : IUserService
+    {
+        private readonly IHttpContextAccessor _accessor;
+
+        public UserService(IHttpContextAccessor accessor)
+        {
+            _accessor = accessor;
+        }
+
+        public ClaimsPrincipal GetUser()
+        {
+            //_accessor.Context?.User;
+            return _accessor?.HttpContext?.User as ClaimsPrincipal;
+        }
+    }
+
+    public static class CurrentData
+    {
+        public static Guid? GetCurrentUser()
+        {
+            IHttpContextAccessor HCA = new HttpContextAccessor();
+
+            IUserService userService = new UserService(HCA);
+            var US = userService.GetUser();
+
+
+             
+            string UserIDString = US?.Identity?.Name; // "3AA19DD8-6AB6-4A40-B6BF-9F0CE0B04BEF"; // System.Web.HttpContext.Current.User.Identity.Name;
+
+            if (string.IsNullOrEmpty(UserIDString) == true) return null;
+
+            Guid UserID;
+
+            if (Guid.TryParse(UserIDString, out UserID) == false)
+            {
+                
+            }
+            return UserID;
+        }
+
+        public static Guid GetCurrentUniversity()
+        {
+
+            Guid? UserID = GetCurrentUser();
+
+            if (UserID == null) return Guid.Empty;
+
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            var Res = userRepository.Find(UserID.Value).Univercity_ID;
+
+            return Res;
+        }
+
+        //public static VersionEnum GetLastVersion()
+        //{
+        //    return VersionEnum.Version22;
+        //}
+
+
+
+        //public static Guid? GetCurrentPerson()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+
+        //    var User = unitOfWork.UserRepository.Find(UserID);
+        //    Guid? Person_ID = null;
+
+        //    if (User != null)
+        //        Person_ID = unitOfWork.UserRepository.Find(UserID).Person_ID;
+
+
+        //    return Person_ID;
+        //}
+
+        //public static Guid? GetCurrentSematSazemaniID()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid? SematSazemani_ID = unitOfWork.UserRepository.Find(UserID).SematSazemani_ID;
+
+
+        //    return SematSazemani_ID;
+        //}
+
+        //public static string GetCurrentSematSazemaniName()
+        //{
+        //    var ID = GetCurrentSematSazemaniID();
+        //    if (ID == null) return null;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    string SematSazemani_Name = unitOfWork.SematSazemaniRepository.Find(ID.Value).SematSazemani_Name;
+
+        //    return SematSazemani_Name;
+        //}
+
+
+
+        //public static Guid GetCurrentSubsystem()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid SubSystemID = unitOfWork.UserRepository.Find(UserID).SubSystem_ActiveID;
+
+        //    return SubSystemID;
+        //}
+        //public static Guid GetCurrentCustomer()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid UserID = GetCurrentUser();
+
+        ////    unitOfWork.UserRepository.GetAll().Include(x => x.SubSystem_tbl);
+
+        //    User_tbl user = unitOfWork.UserRepository.Find(UserID);
+
+
+        //    Guid Customer_ID = unitOfWork.UserRepository.Find(UserID).SubSystem_tbl.Customer_ID;
+        //    return Customer_ID;
+        //}
+
+
+
+
+
+        //public static int GetActiveMaliYear()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid USERID = GetCurrentUser();
+
+        //    int? ActiveYear = unitOfWork.UserRepository.Find(USERID).User_ActiveYear;
+        //    if (ActiveYear == null)
+        //    {
+        //        ActiveYear = unitOfWork.DateRepository.GetPersianDateYear();
+        //    }
+
+        //    return ActiveYear.Value;
+        //}
+
+        //public static string GetCurrentUserName()
+        //{
+        //    Guid UserID = GetCurrentUser();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string UserName= unitOfWork.UserRepository.Find(UserID).User_FullName;
+
+        //    return UserName;
+
+        //}
+
+        //public static string GetCurrentCustomerName()
+        //{
+        //    Guid CustomerID = GetCurrentCustomer();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string CustomerName = unitOfWork.CustomerRepository.Find(CustomerID).Customer_Name;
+
+        //    return CustomerName;
+
+        //}
+
+        //public static string GetCurrentSubsystemName()
+        //{
+        //    Guid SubSystemID = GetCurrentSubsystem();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string SubSystemName = unitOfWork.SubsystemRepository.Find(SubSystemID).SubSystem_Name;
+
+        //    return SubSystemName;
+
+        //}
+
+
+
+        //public static string GetCurrentPersonName()
+        //{
+        //    Guid? PersonID = GetCurrentPerson();
+
+        //    if (PersonID == null) return string.Empty;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string PersonFullName = unitOfWork.PersonRepository.Find(PersonID.Value).PersonFullName;
+
+        //    return PersonFullName;
+
+        //}
+
+
+
+    }
+
+
+}
