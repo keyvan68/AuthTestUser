@@ -1583,3 +1583,40 @@ public class UserController : ControllerBase
 
 
     }
+
+
+    ------------------
+
+     [ApiController]
+    [Route("[controller]")]
+    public class CityController : ControllerBase
+    {
+        private readonly ILogger<CityController> _logger;
+        //private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public CityController(ILogger<CityController> logger/* IHttpContextAccessor httpContextAccessor*/)
+        {
+            _logger = logger;
+        }
+        [HttpGet, Route("initNew")]
+        public ResultClass<CityViewModel> initNew(Guid univercity_ID)
+        {
+            IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
+            //var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var userId1 = httpContextAccessor?.HttpContext?.User as ClaimsPrincipal;
+            try
+            {
+                CityViewModel cityViewModel = new CityViewModel();
+                var obj = cityViewModel.initNew(univercity_ID);
+
+                return obj;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<CityViewModel> resultClass = new ResultClass<CityViewModel>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+
+                return resultClass;
+            }
+        }
