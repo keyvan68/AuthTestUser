@@ -767,3 +767,127 @@ namespace DataLayer.Cookies
 
 
 }
+---------------------
+  [HttpGet, Route("Edit")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<UnivercityViewModel> Edit(Guid id)
+        {
+            try
+            {
+                UnivercityViewModel univercityViewModel = new UnivercityViewModel();
+                var obj = univercityViewModel.LoadData(id);
+
+                return obj;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<UnivercityViewModel> resultClass = new ResultClass<UnivercityViewModel>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+        }
+        ------------------
+
+        
+using DomainClasses.Entities;
+using DomainClasses.Context;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using DataLayer.Cookies;
+using Microsoft.AspNetCore.Http.Features;
+
+var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o => o.LoginPath = new PathString("/Account/login"));
+
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+});
+
+
+builder.Services.AddCors(o => o.AddPolicy("AllowAllOrigins", builder =>
+{
+    builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+
+
+}));
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueCountLimit = int.MaxValue;
+    options.BufferBodyLengthLimit = Int64.MaxValue;
+    options.ValueLengthLimit = int.MaxValue;
+    options.KeyLengthLimit = int.MaxValue;
+});
+
+
+
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUserService, UserService>();
+
+builder.Services.AddDistributedMemoryCache();
+
+
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<ApplicationDbContext>();
+builder.Services.AddCors();
+
+
+//builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(
+//    options =>
+//    {
+
+//        options.Password.RequireLowercase = false;
+//        options.Password.RequireUppercase = false;
+//        options.Password.RequireDigit = false;
+//        options.Password.RequiredLength = 4;
+//        options.Password.RequireNonAlphanumeric = false;
+
+//    }
+//    )
+//.AddEntityFrameworkStores<ApplicationDbContext>();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+}
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+dbContext.Database.Migrate();
+
+
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseCors("AllowAllOrigins");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}");
+
+app.UseSession();
+
+app.MapFallbackToFile("index.html");
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+app.Run();
