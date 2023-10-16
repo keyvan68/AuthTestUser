@@ -723,3 +723,9 @@ app.MapControllers();
 app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.Run();
+
+
+
+{http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: 3fa85f64-5717-4562-b3fc-2c963f66afa6}
+
+{http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: 3fa85f64-5717-4562-b3fc-2c963f66afa6}
