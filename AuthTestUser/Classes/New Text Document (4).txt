@@ -558,3 +558,29 @@ namespace DomainClasses.Enums
 
 }
 
+
+
+**********************************
+
+System.InvalidOperationException: 'The LINQ expression 'DbSet<PersonGHAmel_tbl>()
+    .Where(p => (int)p.PaymentType == (int)__PaymentType_0 && p.PersonGHAmel_Value != null)
+    .Join(
+        inner: DbSet<PersonGH_tbl>(), 
+        outerKeySelector: p => EF.Property<Guid?>(p, "PersonGH_ID"), 
+        innerKeySelector: p0 => EF.Property<Guid?>(p0, "PersonGH_ID"), 
+        resultSelector: (o, i) => new TransparentIdentifier<PersonGHAmel_tbl, PersonGH_tbl>(
+            Outer = o, 
+            Inner = i
+        ))
+    .GroupBy(p => new { 
+        Month = p.Inner.Month, 
+        MonthName = __enumViewModel_1.GetDisplayName(
+            EnumIns: (Type)DomainClasses.Enums.MonthEnum, 
+            Value: (object)p.Inner.Month)
+     })' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.'
+
+
+     This exception was originally thrown at this call stack:
+    [External Code]
+    Application.ViewModels.PersonGH.PersonGHMororViewModel.GetList() in PersonGHMororViewModel.cs
+    Application.Controllers.PersonGHMororController.GetList(Application.ViewModels.PersonGH.PersonGHMororViewModel) in PersonGHMororController.cs
