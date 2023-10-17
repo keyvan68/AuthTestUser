@@ -1,0 +1,584 @@
+using DataLayer.GenericRepository;
+using DomainClasses.Context;
+using DomainClasses.Entities;
+using DomainClasses.Enums;
+using DomainClasses.IRepositories;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace DataLayer.Repository
+{
+    public class PersonGHV22Repository : GenericRepository<PersonGH_tbl, Guid>, IPersonGHRepository
+    {
+        protected readonly ApplicationDbContext ApplicatiobContex;
+
+        protected readonly VersionEnum CurrentVersion = VersionEnum.Version22;
+
+        public PersonGHV22Repository(ApplicationDbContext ApplicatiobContex) : base(ApplicatiobContex)
+        {
+            this.ApplicatiobContex = ApplicatiobContex;
+        }
+
+        public bool CalcHoghogh(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+            var PersonGH = Find(PersonGHID);
+            if (PersonGH != null)
+            {
+                List<string> Errors = new List<string>();
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+                else
+                {
+                   //CalcJamiat(PersonGHID, out Errors);
+                  //CalcSahmeBeitoteh(PersonGHID, out Errors);
+                  CalcSahmeParakandegi(PersonGHID, out Errors);
+
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+            
+        }
+
+        //public bool Copy(int Year_YearIn, MonthEnum MonthIn, VersionEnum VersionEnumIn, int Year_YearOut, MonthEnum MonthOut, VersionEnum VersionEnumInOut, bool ReplaceIfExist, Guid City_ID, out List<string> ErrorMessages)
+        //{
+        //    ErrorMessages = new List<string>();
+        //    var PersonGH = Find(Year_YearIn);
+        //    if (PersonGH != null)
+        //    {
+        //        List<string> Errors = new List<string>();
+
+        //        if (Errors.Count > 0)
+        //        {
+        //            ErrorMessages.AddRange(Errors);
+        //            return false;
+        //        }
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        return false;
+        //    }
+        //}
+        private bool CalcJamiat(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+
+
+            decimal JameiatPrice = 0;
+            PaymentTypeEnum paymentType = PaymentTypeEnum.AlalHesab;
+
+            ConstRepository constRepository = new ConstRepository(ApplicatiobContex);
+            PersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(ApplicatiobContex);
+
+            var PersonGH = Find(PersonGHID);
+
+
+            var obj = personGHAmelRepository.Find(PersonGHID, AmelEnum.Jameiat, paymentType);
+            if (obj != null)
+            {
+                List<string> Errors = new List<string>();
+
+                var Value = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.Jameiat, PersonGH.Zarib, out Errors);
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+                JameiatPrice = (obj.PersonGHAmel_Value ?? 0) * (Value ?? 0);
+            }
+
+
+
+            if (ErrorMessages.Count > 0) return false;
+
+            if (JameiatPrice > 0)
+            {
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.JameiatPrice, paymentType, JameiatPrice);
+
+            }
+
+
+            return ErrorMessages.Count == 0;
+
+        }
+
+        public bool CalcMandehMorkhasi(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool CalcSahmeMandegari(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+
+            ConstRepository constRepository = new ConstRepository(ApplicatiobContex);
+            PersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(ApplicatiobContex);
+
+            PaymentTypeEnum payment = PaymentTypeEnum.AlalHesab;
+
+            decimal? MandegariPrice = 0;
+            decimal markazValue = 0;
+            decimal shahrestanValue = 0;
+            decimal daneshgahValue = 0;
+            decimal keshvarValue = 0;
+            decimal? ValueMandegari = 0;
+
+            var Person = Find(PersonGHID);
+            //var Mandegari = personGHAmelRepository.Find(PersonGHID, AmelEnum.Mandegari, payment);
+
+
+            var markaz = personGHAmelRepository.Find(PersonGHID, AmelEnum.SabeghehDarMarkaz, payment);
+            var shahrestan = personGHAmelRepository.Find(PersonGHID, AmelEnum.DarShahrestan, payment);
+            var daneshgah = personGHAmelRepository.Find(PersonGHID, AmelEnum.SabeghehDarDaneshgah, payment);
+            var keshvar = personGHAmelRepository.Find(PersonGHID, AmelEnum.SabeghehDarKeshvar, payment);
+
+            if (markaz != null)
+            {
+                List<string> Errors = new List<string>();
+
+                //var ValueMarkaz = constRepository.GetConstValue(Person.PersonType, CurrentVersion, AmelEnum.SabeghehDarMarkaz, Person.Zarib, out Errors);
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+                markazValue = ((markaz.PersonGHAmel_Value ?? 0) / 12) * 1;
+            }
+            if (shahrestan != null)
+            {
+                List<string> Errors = new List<string>();
+
+                //var ValueShahrestan = constRepository.GetConstValue(Person.PersonType, CurrentVersion, AmelEnum.DarShahrestan, Person.Zarib, out Errors);
+
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+                shahrestanValue = (((shahrestan.PersonGHAmel_Value ?? 0) / 12) * 85) / 100;
+            }
+            if (daneshgah != null)
+            {
+                List<string> Errors = new List<string>();
+
+                //var ValueDaneshgah = constRepository.GetConstValue(Person.PersonType, CurrentVersion, AmelEnum.SabeghehDarDaneshgah, Person.Zarib, out Errors);
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+                daneshgahValue = (((daneshgah.PersonGHAmel_Value ?? 0) / 12) * 70) / 100;
+            }
+            if (keshvar != null)
+            {
+                List<string> Errors = new List<string>();
+
+                //var Valuekeshvar = constRepository.GetConstValue(Person.PersonType, CurrentVersion, AmelEnum.SabeghehDarKeshvar, Person.Zarib, out Errors);
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+                keshvarValue = (((keshvar.PersonGHAmel_Value ?? 0) / 12) * 50) / 100;
+            }
+
+            var Mandegaritemp = markazValue + daneshgahValue + shahrestanValue + keshvarValue;
+            if (Mandegaritemp > 0)
+            {
+                List<string> Errors = new List<string>();
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.MandegariConst, payment, Mandegaritemp);
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+                ValueMandegari = constRepository.GetConstValue(Person.PersonType, CurrentVersion, AmelEnum.MandegariConst, Person.Zarib, out Errors);
+
+                MandegariPrice = Mandegaritemp * ValueMandegari;
+
+            }
+
+
+            if (ErrorMessages.Count > 0) return false;
+
+            if (MandegariPrice > 0)
+            {
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.MandegariPrice, payment, MandegariPrice);
+
+            }
+
+
+            return ErrorMessages.Count == 0;
+
+
+
+        }
+        private bool CalcSahmeBeitoteh(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+
+
+            decimal? Beitote = 0;
+            decimal BeitotePrice = 0;
+
+            decimal? Valueshabanerozi = 0;
+            decimal? Valuemoen = 0;
+            decimal? ValueTedadPezeshk = 0;
+            decimal? ValueTedadBitotehMovzaf = 0;
+            decimal? ValueAdamHozorDarBitoteh = 0;
+            decimal? ValueAdamHozorDarBitotehTatil = 0;
+            PaymentTypeEnum payment = PaymentTypeEnum.AlalHesab;
+
+            ConstRepository constRepository = new ConstRepository(ApplicatiobContex);
+            PersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(ApplicatiobContex);
+
+            var PersonGH = Find(PersonGHID);
+
+            var shabanerozistate = personGHAmelRepository.Find(PersonGHID, AmelEnum.ShabanehRoziState, payment);
+
+            if (shabanerozistate != null)
+            {
+                List<string> Errors = new List<string>();
+
+                Valueshabanerozi = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.ShabanehRoziState, PersonGH.Zarib, out Errors);
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+                Beitote = (shabanerozistate.PersonGHAmel_Value ?? 0) * (Valueshabanerozi ?? 0);
+            }
+            var moenstate = personGHAmelRepository.Find(PersonGHID, AmelEnum.MoeanState, payment);
+
+            if (moenstate != null)
+            {
+                List<string> Errors = new List<string>();
+
+                Valuemoen = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.MoeanState, PersonGH.Zarib, out Errors);
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+                Beitote = (moenstate.PersonGHAmel_Value ?? 0) * (Valuemoen ?? 0);
+
+            }
+            var TedadPezeshkstate = personGHAmelRepository.Find(PersonGHID, AmelEnum.TedadPezeshk, payment);
+
+            if (TedadPezeshkstate != null)
+            {
+
+                List<string> Errors = new List<string>();
+                PaymentTypeEnum paymentType = PaymentTypeEnum.AlalHesab;
+                var jamiat = personGHAmelRepository.Find(PersonGHID, AmelEnum.Jameiat, paymentType);
+                //var jamiat = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.Jameiat, PersonGH.Zarib, out Errors);
+                int PezeshkType = Convert.ToInt32(TedadPezeshkstate.PersonGHAmel_Value);
+
+                if (PezeshkType == 1)
+                {
+                    if (jamiat.PersonGHAmel_Value > 5000)
+                    {
+                        ValueTedadPezeshk = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.DoPezeshkConst, PersonGH.Zarib, out Errors);
+                        Beitote = ValueTedadPezeshk ;
+                    }
+                    else
+                    {
+                        ValueTedadPezeshk = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.TakPezeshkConst, PersonGH.Zarib, out Errors);
+                        Beitote = ValueTedadPezeshk;
+                    }
+
+                }
+                else if (PezeshkType == 2)
+                {
+                    ValueTedadPezeshk = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.DoPezeshkConst, PersonGH.Zarib, out Errors);
+                    Beitote = ValueTedadPezeshk;
+                }
+                else if (PezeshkType == 3)
+                {
+                    ValueTedadPezeshk = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.SePezeshkeConst, PersonGH.Zarib, out Errors);
+                    Beitote = ValueTedadPezeshk;
+                }
+
+
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+
+            }
+
+            var AdamHozorDarBitotehAdistate = personGHAmelRepository.Find(PersonGHID, AmelEnum.AdamHozorDarBitoteh, payment);
+            var AdamHozorDarBitotehTatilstate = personGHAmelRepository.Find(PersonGHID, AmelEnum.AdamHozorBitotehDarRozhaiTatil, payment);
+            var TedadBitotehMovzafstate = personGHAmelRepository.Find(PersonGHID, AmelEnum.TedadBitotehMovzaf, payment);
+            
+
+            if (Beitote > 0)
+            {
+                BeitotePrice =((TedadBitotehMovzafstate?.PersonGHAmel_Value ?? 0) - ((AdamHozorDarBitotehAdistate?.PersonGHAmel_Value ?? 0) + ((AdamHozorDarBitotehTatilstate?.PersonGHAmel_Value ?? 0) * 2)))* Beitote ?? 0;
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.BeitotePriceConst, payment, BeitotePrice);
+
+            }
+
+            return ErrorMessages.Count == 0;
+
+        }
+
+        private bool CalcSahmeMahromiat(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+            IConstRepository constRepository = new ConstRepository(ApplicatiobContex);
+            IPersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(ApplicatiobContex);
+            decimal mahromiatPrice = 0;
+
+            var person = Find(PersonGHID);
+
+            PaymentTypeEnum payment = PaymentTypeEnum.AlalHesab;
+
+            //var Mahromiat = personGHAmelRepository.Find(PersonGHID, AmelEnum.Mahromiat, payment);
+
+
+            List<string> errors = new List<string>();
+            var MahromiatValue = constRepository.GetConstValue(person.PersonType, CurrentVersion, AmelEnum.MahromiatConst, person.Zarib, out errors);
+
+            if (errors.Count > 0)
+            {
+                ErrorMessages.AddRange(errors);
+                return false;
+            }
+            mahromiatPrice = (MahromiatValue ?? 0);
+
+
+            if (ErrorMessages.Count > 0) return false;
+
+            if (mahromiatPrice > 0)
+            {
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.MahromiatPrice, payment, mahromiatPrice);
+
+            }
+
+
+            return ErrorMessages.Count == 0;
+
+
+
+        }
+
+        private bool CalcSahmeParakandegi(Guid PersonGHID, out List<string> ErrorMessages)
+        {
+            ErrorMessages = new List<string>();
+            IConstRepository constRepository = new ConstRepository(ApplicatiobContex);
+            IPersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(ApplicatiobContex);
+            IRostaRepository rostaRepository = new RostaRepository(ApplicatiobContex);
+            IKhanehBehdashtRepository khanehBehdashtRepository = new KhanehBehdashtRepository(ApplicatiobContex);
+
+            RostaTypeEnum rostaTypeEnum = new RostaTypeEnum();
+            decimal ParakandegiPrice = 0;
+            decimal AbiOrKhakiPrice = 0;
+            decimal AsphaltPrice = 0;
+
+            int KhaneBehdasht = 0;
+            int Aghmari = 0;
+            int sayari = 0;
+            int AghmariMostaghim = 0;
+            int SayariMostaghim = 0;
+
+            decimal FaselAsfKhaneBehdasht = 0;
+            decimal FaselAbiKhaneBehdasht = 0;
+            decimal FaselAsfAghmari = 0;
+            decimal FaselAbiAghmari = 0;
+            decimal FaselAsfSayari = 0;
+            decimal FaselAbiSayari = 0;
+            decimal FaselAsfAghmariMostaghim = 0;
+            decimal FaselAbiAghmariMostaghim = 0;
+
+            decimal SahmVahed = 0;
+            decimal TedadBazdidKhaneBehdasht = 0;
+            decimal TedadBazdidGhamar = 0;
+            decimal TedadBazdidsayar = 0;
+            decimal TedadBazdidMostaghim = 0;
+            PaymentTypeEnum payment = PaymentTypeEnum.AlalHesab;
+
+            var PersonGH = Find(PersonGHID);
+            PersonGHRostaRepository personGHRostaRepository = new PersonGHRostaRepository(ApplicatiobContex);
+            PersonGHKhanebehdashtRepository personGHKhanebehdashtRepository = new PersonGHKhanebehdashtRepository(ApplicatiobContex);
+
+            var PersonGHRosta =personGHRostaRepository.GetAll().Where(x=>x.PersonGH_ID == PersonGHID).Count();
+            var PersonGHKhaneBehdasht = personGHKhanebehdashtRepository.GetAll().Where(x=>x.PersonGH_ID == PersonGHID).Count();
+
+            if (PersonGHRosta > 0 || PersonGHKhaneBehdasht > 0)
+            {
+                RostaTypeEnum?  a = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht)
+                    .FirstOrDefault().RostaType;
+                //RostaTypeEnum? b = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiGhamar).FirstOrDefault().RostaType;
+                //RostaTypeEnum? c = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiSayari).FirstOrDefault().RostaType;
+                //RostaTypeEnum? d = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiGhamarMostaghim || x.RostaType == RostaTypeEnum.RostaiSayariMostaghim).FirstOrDefault().RostaType;
+                if (a == RostaTypeEnum.KhanehBehdasht)
+                {
+                    List<string> Errors = new List<string>();
+                    var jamiat = personGHAmelRepository.Find(PersonGHID, AmelEnum.Jameiat, payment);
+                    var TedadBazdid = personGHAmelRepository.Find(PersonGHID, AmelEnum.BazdidKhanehBeshdashtCount, payment);
+                    TedadBazdidKhaneBehdasht = TedadBazdid?.PersonGHAmel_Value ?? 0;
+                    
+                    //if (jamiat?.PersonGHAmel_Value == null)
+                    //{
+                    //    ErrorMessages.Add("بزای محاسبه دقیقتر لطفا جمعیت را وارد نمایید");
+                    //}
+                    if (jamiat?.PersonGHAmel_Value < 500)
+                    {
+                        //KhaneBehdasht = khanehBehdashtRepository.GetAll().Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).Count() * 4;
+                        KhaneBehdasht = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).Count() * 2;
+                        var a1 = khanehBehdashtRepository.GetAll().Where(x => x.Markaz_ID == PersonGH.Markaz_ID).ToList();
+
+                        foreach (var item in a1)
+                        {
+                            FaselAsfKhaneBehdasht += item.KhanehBehdasht_FaselAsf * 2;
+                            FaselAbiKhaneBehdasht += item.KhanehBehdasht_FaselAbi * 2;
+                        }
+
+                    }
+                    else
+                    {
+                        //KhaneBehdasht = khanehBehdashtRepository.GetAll().Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).Count() * 4;
+                        KhaneBehdasht = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).Count() * 4;
+                        var a1 = khanehBehdashtRepository.GetAll().Where(x=>x.Markaz_ID ==  PersonGH.Markaz_ID).ToList();
+                        foreach (var item in a1)
+                        {
+                            FaselAsfKhaneBehdasht += item.KhanehBehdasht_FaselAsf * 4;
+                            FaselAbiKhaneBehdasht += item.KhanehBehdasht_FaselAbi * 4;
+                        }
+                    
+                    }
+                    if (Errors.Count > 0)
+                    {
+                        ErrorMessages.AddRange(Errors);
+                        return false;
+                    }
+
+                }
+                var b = RostaTypeEnum.RostaiGhamar;
+                if (b == RostaTypeEnum.RostaiGhamar)
+                {
+                    var TedadBazdid = personGHAmelRepository.Find(PersonGHID, AmelEnum.BazdidRostaiAghmariCount, payment);
+                    TedadBazdidGhamar = TedadBazdid?.PersonGHAmel_Value ?? 0;
+                    Aghmari = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiGhamar).Count();
+                    var a1 = rostaRepository.GetAll().Where(x => x.KhanehBehdasht_tbl.Markaz_ID == PersonGH.Markaz_ID).ToList();
+                    var a2 = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiGhamar).ToList();
+
+                    foreach (var item in a1)
+                    {
+                        foreach (var item1 in a2)
+                        {
+                            if (item.Rosta_ID == item1.Rosta_ID)
+                            {
+                                FaselAsfAghmari += item.Rosta_FaselAsf;
+                                FaselAbiAghmari += item.Rosta_FaselAbi;
+                            }
+
+                            //FaselAsfAghmari= FaselAsfAghmari
+                        }
+
+                        //FaselAsfAghmari
+                    }
+                   
+                }
+                if (rostaTypeEnum == RostaTypeEnum.RostaiSayari)
+                {
+                    var TedadBazdid = personGHAmelRepository.Find(PersonGHID, AmelEnum.BazdidRostaiSayaeriCount, payment);
+                    TedadBazdidsayar = TedadBazdid?.PersonGHAmel_Value ?? 0;
+                    sayari = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiSayari).Count() / 3;
+                    FaselAsfSayari = rostaRepository.Find(PersonGH.Markaz_ID).Rosta_FaselAsf / 3;
+                    FaselAsfAghmari = rostaRepository.Find(PersonGH.Markaz_ID).Rosta_FaselAbi / 3;
+                }
+                if (rostaTypeEnum == RostaTypeEnum.RostaiGhamarMostaghim || rostaTypeEnum == RostaTypeEnum.RostaiSayariMostaghim)
+                {
+                    var TedadBazdid = personGHAmelRepository.Find(PersonGHID, AmelEnum.BazdidRostaiMostaghimCount, payment);
+                    TedadBazdidMostaghim = TedadBazdid?.PersonGHAmel_Value ?? 0;
+                    AghmariMostaghim = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiGhamarMostaghim).Count();
+                    SayariMostaghim = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.RostaiSayariMostaghim).Count();
+                    FaselAsfAghmariMostaghim = rostaRepository.Find(PersonGH.Markaz_ID).Rosta_FaselAsf;
+                    FaselAbiAghmariMostaghim = rostaRepository.Find(PersonGH.Markaz_ID).Rosta_FaselAbi;
+                }
+            }
+            else
+            {
+                
+            }
+           
+
+
+
+            //var Parakandegi = personGHAmelRepository.Find(PersonGHID, AmelEnum.ParakandegiConst, payment);
+
+            if (PersonGHRosta >0)
+            {
+                List<string> Errors = new List<string>();
+                var ParakandegiValue = constRepository.GetConstValue(PersonGH.PersonType, CurrentVersion, AmelEnum.ParakandegiConst, PersonGH.Zarib, out Errors);
+
+                if (Errors.Count > 0)
+                {
+                    ErrorMessages.AddRange(Errors);
+                    return false;
+                }
+                SahmVahed = (KhaneBehdasht + Aghmari + sayari + AghmariMostaghim + SayariMostaghim) * ParakandegiValue?? 0;
+                var TedadBazdidAnjamshode = TedadBazdidKhaneBehdasht + TedadBazdidGhamar + TedadBazdidsayar + TedadBazdidMostaghim;
+                var VahedMovazaf = KhaneBehdasht + Aghmari + sayari + AghmariMostaghim + SayariMostaghim;
+                var SahmFaseleAbi = FaselAbiKhaneBehdasht + FaselAbiAghmari + FaselAbiSayari + FaselAbiAghmariMostaghim;
+                var SahmFaseleasf = FaselAsfKhaneBehdasht + FaselAsfAghmari + FaselAsfSayari + FaselAsfAghmariMostaghim;
+                var majmoeSahmHa = SahmVahed + SahmFaseleAbi + SahmFaseleasf;
+
+
+                ParakandegiPrice = (TedadBazdidAnjamshode / VahedMovazaf) * majmoeSahmHa;
+            }
+
+            if (ParakandegiPrice > 0)
+            {
+                personGHAmelRepository.SavePersonGHAmel(PersonGHID, AmelEnum.ParakandegiPrice, payment, ParakandegiPrice);
+
+            }
+            return ErrorMessages.Count == 0;
+
+        }
+
+        public IQueryable<PersonGH_tbl> GetAll()
+        {
+            return GetAllWithOutCond();
+        }
+
+        public bool Copy(int Year_YearIn, MonthEnum MonthIn, VersionEnum VersionEnumIn, int Year_YearOut, MonthEnum MonthOut, VersionEnum VersionEnumInOut, bool ReplaceIfExist/*, Guid City_ID/*, out List<string> ErrorMessages*/)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Copy(int Year_YearIn, MonthEnum MonthIn, VersionEnum VersionEnumIn, int Year_YearOut, MonthEnum MonthOut, VersionEnum VersionEnumOut, bool ReplaceIfExist, Guid City_ID, out List<string> ErrorMessages)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

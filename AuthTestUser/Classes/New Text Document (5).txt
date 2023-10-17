@@ -312,3 +312,33 @@ app.Run();
 
 
     RostaTypeEnum?  a = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).FirstOrDefault().RostaType;
+
+
+    --------------------------------------------
+
+     [HttpGet, Route("Search")]
+        public ResultClass<List<PersonGHClass>> Search(Guid Markaz_ID, MonthEnum Month, int Year_Year, VersionEnum VersionEnum, Guid Person_ID)
+        {
+
+
+            try
+            {
+                PersonGHViewModel personGHViewModel = new PersonGHViewModel();
+                var obj = personGHViewModel.Search(Markaz_ID, Month, Year_Year, VersionEnum, Person_ID);
+
+                return obj;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<List<PersonGHClass>> resultClass = new ResultClass<List<PersonGHClass>>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+        }
+
+
+        ------------------------------------------------------
+
+
