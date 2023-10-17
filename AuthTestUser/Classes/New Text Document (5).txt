@@ -303,3 +303,12 @@ app.Run();
 
 
     }
+
+
+
+    14020725\1255------------------------------
+
+    'Object reference not set to an instance of an object.'
+
+
+    RostaTypeEnum?  a = personGHRostaRepository.GetAll().Where(x => x.PersonGH_ID == PersonGHID).Include(x => x.Rosta_Tbl).Where(x => x.RostaType == RostaTypeEnum.KhanehBehdasht).FirstOrDefault().RostaType;
