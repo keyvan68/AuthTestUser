@@ -341,4 +341,432 @@ app.Run();
 
         ------------------------------------------------------
 
+        14020726***********************
+
+
+        using System.Collections.Generic;
+using Application.Classes;
+using Application.ViewModels.Enumv;
+using DataLayer.Repository;
+using DomainClasses.Context;
+using DomainClasses.Enums;
+
+namespace Application.ViewModels.PersonGH
+{
+
+
+    public class PersonGHMororViewModel
+    {
+        public enum ObjectTypeEnum
+        {
+            person = 1,
+            Year = 2,
+            Month = 3,
+            Version = 4,
+            City = 5,
+            Markaz = 6,
+            PersonType = 7,
+            PersonTypeGroup = 8,
+            Amel = 9
+        }
+
+        public class PersonGHMororClass
+        {
+            public Guid? PersonGH_ID { get; set; }
+            public Guid? Person_ID { get; set; }
+
+            public string PersonName { get; set; }
+
+            public int? Year { get; set; }
+
+            public MonthEnum? Month { get; set; }
+
+            public string MonthName { get; set; }
+
+            public Guid? City_ID { get; set; }
+
+            public string CityName { get; set; }
+
+            public Guid? Markaz_ID { get; set; }
+
+            public string MarkazName { get; set; }
+
+            public PersonTypeEnum? PersonType { get; set; }
+
+            public string PersonTypeName { get; set; }
+
+            public PersonTypeGroupEnum? PersonTypeGroup { get; set; }
+
+            public string PersonTypeGroupName { get; set; }
+
+            public VersionEnum Version { get; set; }
+            public string VersionName { get; set; }
+
+            public AmelEnum? AmelEnum { get; set; }
+
+            public string AmelEnumName { get; set; }
+
+            public decimal? Price { get; set; }
+
+            public int? Count { get; set; }
+
+            public Boolean ischecked { get; set; }
+
+        }
+
+        public class CondClass
+        {
+            public string ID { get; set; }
+
+            public ObjectTypeEnum objectType { get; set; }
+        }
+
+        public List<CondClass> Conds { get; set; }
+
+        public ObjectTypeEnum SelectedObjectType { get; set; }
+
+        public PaymentTypeEnum PaymentType { get; set; }
+        public int? PageNumber { get; set; } = 1;
+        public int? PageSize { get; set; } = 10;
+        public Boolean isSortAsce { get; set; }
+
+        public PersonGHMororViewModel()
+        {
+            Conds = new List<CondClass>();
+        }
+        public void New()
+        {
+            PageNumber  = 1 ;
+            PageSize =10 ;
+        }
+        public ResultClass<List<PersonGHMororClass>> GetList()
+        {
+            ResultClass<List<PersonGHMororClass>> resultClass = new ResultClass<List<PersonGHMororClass>>();
+            resultClass.Result = new List<PersonGHMororClass>();
+
+            List<PersonGHMororClass> Res = new List<PersonGHMororClass>();
+
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+
+            PersonGHAmelRepository personGHAmelRepository = new PersonGHAmelRepository(applicationDbContext);
+            var Query = personGHAmelRepository.GetAll().Where(x => x.PaymentType == PaymentType && x.PersonGHAmel_Value != null);
+
+            var PersonIDs = Conds.Where(x => x.objectType == ObjectTypeEnum.person).Select(x => Guid.Parse(x.ID)).ToList();
+            var CityIDs = Conds.Where(x => x.objectType == ObjectTypeEnum.City).Select(x => Guid.Parse(x.ID)).ToList();
+            var MarkazIDs = Conds.Where(x => x.objectType == ObjectTypeEnum.Markaz).Select(x => Guid.Parse(x.ID)).ToList();
+            var amelen = Conds.Where(x => x.objectType == ObjectTypeEnum.Amel).Select(x => int.Parse(x.ID)).ToList();
+            var persontypegroup = Conds.Where(x => x.objectType == ObjectTypeEnum.PersonTypeGroup).Select(x => int.Parse(x.ID)).ToList();
+            var PersonTypes = Conds.Where(x => x.objectType == ObjectTypeEnum.PersonType).Select(x => int.Parse(x.ID)).ToList();
+            var month = Conds.Where(x => x.objectType == ObjectTypeEnum.Month).Select(x => int.Parse(x.ID)).ToList();
+            var year = Conds.Where(x => x.objectType == ObjectTypeEnum.Year).Select(x => int.Parse(x.ID)).ToList();
+            var version = Conds.Where(x => x.objectType == ObjectTypeEnum.Version).Select(x => int.Parse(x.ID)).ToList();
+
+
+
+
+            EnumViewModel enumViewModel = new EnumViewModel();
+
+            if (SelectedObjectType == ObjectTypeEnum.person)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    Person_ID = x.PersonGH_Tbl.Person_ID,
+                    Person_Name = x.PersonGH_Tbl.Person_Tbl.Person_Name,
+                    Person_Family = x.PersonGH_Tbl.Person_Tbl.Person_Family
+                }).Select(x => new PersonGHMororClass
+                {
+                    Person_ID = x.Key.Person_ID,
+                    PersonName = x.Key.Person_Name + " " + x.Key.Person_Family,
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked = PersonIDs.Contains(x.Key.Person_ID)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x.PersonName).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.City)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    City_ID = x.PersonGH_Tbl.Markaz_Tbl.Bakhsh_Tbl.City_ID,
+                    City_Name = x.PersonGH_Tbl.Markaz_Tbl.Bakhsh_Tbl.City_Tbl.City_Name,
+                }).Select(x => new PersonGHMororClass
+                {
+                    City_ID = x.Key.City_ID,
+                    CityName = x.Key.City_Name,
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked = CityIDs.Contains(x.Key.City_ID)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.Year)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    Year=x.PersonGH_Tbl.Year_Year,
+                }).Select(x => new PersonGHMororClass
+                {
+                    Year=x.Key.Year,
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked = year.Contains(x.Key.Year)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.Month)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    Month = x.PersonGH_Tbl.Month,
+                    //MonthName = enumViewModel.GetDisplayName(typeof(MonthEnum), x.PersonGH_Tbl.Month),
+                }).ToList().Select(x => new PersonGHMororClass
+                {
+                    Month = x.Key.Month,
+                    MonthName = enumViewModel.GetDisplayName(typeof(MonthEnum), x.Key.Month),
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked = month.Contains((int)x.Key.Month)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.Version)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    Version=x.PersonGH_Tbl.VersionEnum,
+                    
+                }).ToList().Select(x => new PersonGHMororClass
+                {
+                    Version = x.Key.Version,
+                    VersionName = enumViewModel.GetDisplayName(typeof(VersionEnum), x.Key.Version),
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked = version.Contains((int)x.Key.Version)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.Markaz)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    Markaz_ID = x.PersonGH_Tbl.Markaz_ID,
+                    MarkazName= x.PersonGH_Tbl.Markaz_Tbl.Markaz_Name,
+                }).Select(x => new PersonGHMororClass
+                {
+                    Markaz_ID=x.Key.Markaz_ID,
+                    MarkazName= x.Key.MarkazName,
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked= MarkazIDs.Contains(x.Key.Markaz_ID)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.PersonType)
+            {
+                Res = Query.GroupBy(x => new
+                {
+                    PersonType=x.PersonGH_Tbl.PersonType,
+
+                }).ToList().Select(x => new PersonGHMororClass
+                {
+                    PersonType =x.Key.PersonType,
+                    PersonTypeName= enumViewModel.GetDisplayName(typeof(PersonTypeEnum), x.Key.PersonType),
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked=PersonTypes.Contains((int)x.Key.PersonType)
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+            if (SelectedObjectType == ObjectTypeEnum.PersonTypeGroup)
+            {
+
+
+                Res = Query.GroupBy(x => new
+                {
+                    PersonType = x.PersonGH_Tbl.PersonType,
+                }).ToList().Select(x => new
+                {
+                    PersonTypeGroup = PersonTypeEnumClass.GetPersonTypeGroupCode(x.Key.PersonType),
+                    price = x.Sum(y => y.PersonGHAmel_Value ?? 0)
+
+
+
+                }).GroupBy(x => x.PersonTypeGroup).Select(x => new PersonGHMororClass
+                {
+                    PersonTypeGroup = x.Key,
+                    PersonTypeGroupName = enumViewModel.GetDisplayName(typeof(PersonTypeGroupEnum), x.Key),
+                    Price = x.Sum(y => y.price),
+                    ischecked = persontypegroup.Contains((int)x.Key)
+
+                }).ToList();
+
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x).ToList();
+
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+
+
+                //PersonTypeEnumClass.GetPersonTypeCode(x.Key.PersonType)
+            }
+            if (SelectedObjectType == ObjectTypeEnum.Amel)
+            {
+                
+                Res = Query.GroupBy(x => new
+                {
+                    AmelEnum = x.Amel,
+                }).ToList().Select(x => new PersonGHMororClass
+                {
+                    AmelEnum = x.Key.AmelEnum,
+                    AmelEnumName = enumViewModel.GetDisplayName(typeof(AmelEnum), x.Key.AmelEnum),
+                    Price = x.Sum(y => y.PersonGHAmel_Value ?? 0),
+                    ischecked= amelen.Contains((int)x.Key.AmelEnum)
+                }).ToList();
+                if (isSortAsce == false) Res = Res.OrderByDescending(x => x.AmelEnumName).ToList();
+                PageNumber = PageNumber ?? 1;
+                PageSize = PageSize ?? 10;
+
+                int SkipRecordCount = (PageNumber.Value - 1) * PageSize.Value;
+
+                resultClass.RecordEffected = Res.Count();
+
+
+                Res = Res.Skip(SkipRecordCount).Take(PageSize.Value).ToList();
+            }
+           
+            resultClass.Result = Res;
+
+            resultClass.SetDefualtSuccessSystem();
+
+            return resultClass;
+        }
+
+    }
+
+    
+}
+
+
+++++++++++++++++++++++++++++++
+using Application.Classes;
+using Application.ViewModels.Markaz;
+using Application.ViewModels.PersonGH;
+using DataLayer.Classes;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Application.Controllers
+{
+    [Route("[controller]")]
+    [ApiController]
+    public class PersonGHMororController : ControllerBase
+    {
+        private readonly ILogger<PersonGHMororController> _logger;
+
+        public PersonGHMororController(ILogger<PersonGHMororController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpPost, Route("GetList")]
+        public ResultClass<List<PersonGHMororViewModel.PersonGHMororClass>> GetList(PersonGHMororViewModel VM)
+        {
+
+            try
+            {
+                var user = VM.GetList();
+                return user;
+
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<List<PersonGHMororViewModel.PersonGHMororClass>> resultClass = new ResultClass<List<PersonGHMororViewModel.PersonGHMororClass>>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+        }
+    }
+
+
+}
+
+
 
