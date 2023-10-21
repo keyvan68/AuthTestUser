@@ -1,0 +1,1305 @@
+using Application;
+using Application.Classes;
+using Application.ViewModels.Access;
+using Application.ViewModels.Markaz;
+using Application.ViewModels.User;
+using DataLayer.Classes;
+using DomainClasses.Entities;
+using DomainClasses.Enums;
+using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Contracts;
+using System.Net.WebSockets;
+using System.Security.AccessControl;
+using System.Security.Claims;
+using static Application.ViewModels.User.UserListCondViewModel;
+using Microsoft.AspNetCore.Authorization;
+using DataLayer.Cookies;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace webapi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class UserController : ControllerBase
+{
+
+    private readonly ILogger<UserController> _logger;
+    //private readonly SignInManager<ApplicationUser> _signInManager;
+    //private readonly UserManager<ApplicationUser> _userManager;
+
+
+    public UserController(ILogger<UserController> logger) //, SignInManager<ApplicationUser> signInManager = null, UserManager<ApplicationUser> userManager = null
+    {
+        _logger = logger;
+        //_signInManager = signInManager;
+        //_userManager = userManager;
+    }
+
+
+
+    [HttpGet, Route("initNew")]
+    [CustomAuthorizeAttribute(136)]
+    public ResultClass<UserViewModel> initNew()
+    {
+
+        //   Getff(typeof(EstekhdamiType));
+
+        //var fff = FindV(typeof(EstekhdamiType), EstekhdamiType.Paimani);
+
+
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var obj = UserViewModel.initNew();
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+
+            ResultClass<UserViewModel> resultClass = new Application.Classes.ResultClass<UserViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+
+
+    [HttpGet, Route("Edit")]
+    public async Task<ResultClass<UserViewModel>> Edit(Guid id)
+    {
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            var obj = UserViewModel.LoadData(id);
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<UserViewModel> resultClass = new ResultClass<UserViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+
+    [HttpPost, Route("StoreData")]
+    public async Task<ResultClass<Boolean>> StoreData(UserViewModel UserViewModel)
+    {
+        
+        try
+        {
+            ResultClass<Boolean> res = new ResultClass<bool>();
+
+            if (ModelState.IsValid)
+            {
+                res = UserViewModel.StoreData();
+
+
+
+                //var userAspNet = new ApplicationUser
+                //{
+                //    UserName = UserViewModel.User_Code,
+                //};
+                //var result = await _userManager.CreateAsync(userAspNet, UserViewModel.User_Pass);
+                //if (result.Succeeded)
+                //{
+                //    await _userManager.AddToRoleAsync(userAspNet, UserViewModel.User_Role);
+                //    UserViewModel.User_ID = userAspNet.Id;
+                //    res = UserViewModel.StoreData();
+                //}
+                //else
+                //{
+                //    res.Errors.AddRange(result.Errors.Select(error => error.Description));
+                //}
+
+                //var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            }
+            else
+            {
+                var errors = ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                    .Select(m => m.ErrorMessage).ToList();
+                res.SetError(errors);
+
+            }
+
+            return res;
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+
+    }
+
+    [HttpDelete, Route("Delete")]
+    public async Task<ResultClass<Boolean>> Delete(Guid id)
+    {
+        try
+        {
+            UserViewModel UserViewModel = new UserViewModel();
+            //var user = UserViewModel.LoadData(id).Result;
+            var res = UserViewModel.Delete(id);
+            //if (user != null)
+            //{
+            //    // حذف کاربر از جدول User
+            //    var userAspNet = await _userManager.FindByIdAsync(user.User_ID.ToString());
+            //    if (userAspNet != null)
+            //    {
+            //        await _userManager.DeleteAsync(userAspNet);
+            //    }
+            //}
+
+            return res;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpGet, Route("InitGetList")]
+    public ResultClass<UserListCondViewModel> InitGetList()
+    {
+        try
+        {
+            ResultClass<UserListCondViewModel> resultClass = new ResultClass<UserListCondViewModel>();
+
+            UserListCondViewModel UserViewModel = new UserListCondViewModel();
+            UserViewModel.New();
+            resultClass.SetDefualtSuccessSystem();
+
+            return resultClass;
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<UserListCondViewModel> resultClass = new ResultClass<UserListCondViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+    [HttpPost, Route("GetList")]
+    public ResultClass<List<UserListCondViewModel.UserListClass>> GetList(UserListCondViewModel UserViewModel)
+    {
+        // 
+        try
+        {
+            var user = UserViewModel.GetAll();
+            return user;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<List<UserListCondViewModel.UserListClass>> resultClass = new ResultClass<List<UserListCondViewModel.UserListClass>>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+
+    [HttpGet, Route("GetUserName")]
+    public ResultClass<string> GetUserName()
+    {
+        try
+        {
+            ResultClass<string> resultClass = new ResultClass<string>();
+            var UserId = CurrentData.GetCurrentUser();
+            if (UserId == null)
+            {
+                resultClass.Result = "کاربر پیدا نشد";
+            }
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            var user = userRepository.Find(UserId.Value);
+            if (user == null)
+            {
+                resultClass.Result = "دانشگاه پیدا نشد";
+            }
+            else
+            {
+                resultClass.Result = user.User_FullName;
+            }
+
+
+            return resultClass;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<string> resultClass = new ResultClass<string>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpPost, Route("Login")]
+    [AllowAnonymous]
+    public async Task<ResultClass<Boolean>> Login(LoginViewModel VM)
+    {
+        string returnUrl = "";
+
+        try
+        {
+            ResultClass<Boolean> Res = new ResultClass<bool>();
+
+            var user = VM.Login();
+
+            Res.Result = user != null; 
+            if (Res.Result)
+            {
+                var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name, user.User_ID.ToString()),
+                            new Claim("FullUserName", user.User_FullName),
+                            new Claim(ClaimTypes.Role, "Administrator"),
+                        };
+
+
+
+
+                var claimsIdentity = new ClaimsIdentity(
+                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                //var authProperties = new AuthenticationProperties
+                //{
+                //    //AllowRefresh = <bool>,
+                //    // Refreshing the authentication session should be allowed.
+
+                //    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60),
+                //    // The time at which the authentication ticket expires. A 
+                //    // value set here overrides the ExpireTimeSpan option of 
+                //    // CookieAuthenticationOptions set with AddCookie.
+
+                //    IsPersistent = true,
+                //    // Whether the authentication session is persisted across 
+                //    // multiple requests. When used with cookies, controls
+                //    // whether the cookie's lifetime is absolute (matching the
+                //    // lifetime of the authentication ticket) or session-based.
+
+                //    //IssuedUtc = <DateTimeOffset>,
+                //    // The time at which the authentication ticket was issued.
+
+                //    RedirectUri = returnUrl
+                //    // The full path or absolute URI to be used as an http 
+                //    // redirect response value.
+                //};
+
+
+                    //HttpContext.SignInAsync(
+                    //    CookieAuthenticationDefaults.AuthenticationScheme,
+                    //    new ClaimsPrincipal(claimsIdentity),
+                    //    authProperties);
+
+
+                //HttpContext.SignInAsync(
+                //    CookieAuthenticationDefaults.AuthenticationScheme,
+                //    new ClaimsPrincipal(claimsIdentity));
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTime.UtcNow.AddMinutes(20)
+                    });
+                //var ss = HttpContext.User.Identity.Name;
+
+
+                Res.SetDefualtSuccessSystem();
+            }
+            else
+            {
+                Res.Errors.Add("کاربری با این مشخصات پیدا نشد");
+            }
+
+
+            return Res;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpGet, Route("Logout")]
+    public ResultClass<Boolean> Logout()
+    {
+        try
+        {
+            HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+
+
+            ResultClass<Boolean> Res = new ResultClass<bool>();
+            Res.Result = true;
+            Res.SetDefualtSuccessSystem();
+
+            return Res;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+
+
+}
+
+
+----------------------------------
+
+
+using DomainClasses.IRepositories;
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Web;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace Application.Classes
+{
+    public class CustomAuthorizeAttribute : TypeFilterAttribute
+    {
+        public CustomAuthorizeAttribute(int AccessLstID) : base(typeof(ClaimRequirementFilter))
+        {
+            Arguments = new object[] { AccessLstID };
+        }
+    }
+
+    public class ClaimRequirementFilter : IAuthorizationFilter
+    {
+        //  readonly Claim _claim;
+        readonly int _AccessLstID;
+
+        public ClaimRequirementFilter(int AccessLstID)
+        {
+            _AccessLstID = AccessLstID;
+        }
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            if (_AccessLstID == 0)
+            {
+                context.Result = new ForbidResult();
+                return;
+            }
+
+
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            Boolean authorize = userRepository.isHasAccess(_AccessLstID);
+
+            AccessRepository accessRepository = new AccessRepository(applicationDbContext);
+            if (authorize == false)
+            {
+                context.Result = new ForbidResult();
+            }
+
+            return;
+        }
+    }
+
+
+    //public class CustomAuthorizeAttribute2 : IAuthorizationFilter
+    //{
+
+    //    public CustomAuthorizeAttribute2()
+    //    {
+
+    //    }
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        int i = 0;
+
+
+    //        return;
+    //        //context.Result = new ForbidResult();
+
+    //       // context.Result = new HttpUnauthorizedResult();
+    //    }
+    //}
+
+
+
+    //public class MinimumAgeAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    const string POLICY_PREFIX = "MinimumAge";
+    //    int Age;
+    //    public MinimumAgeAuthorizeAttribute(int age)
+    //    {
+    //        Age = age;
+    //    }
+
+
+    //    //public MinimumAgeAuthorizeAttribute(int age) => Age = age;
+
+    //    //// Get or set the Age property by manipulating the underlying Policy property
+    //    //public int Age
+    //    //{
+    //    //    get
+    //    //    {
+    //    //        if (int.TryParse(Policy.Substring(POLICY_PREFIX.Length), out var age))
+    //    //        {
+    //    //            return age;
+    //    //        }
+    //    //        return default(int);
+    //    //    }
+    //    //    set
+    //    //    {
+    //    //        Policy = $"{POLICY_PREFIX}{value.ToString()}";
+    //    //    }
+    //    //}
+    //}
+
+
+
+    //public class CustomAuthorizeAttribute : IAuthorizationFilter
+    //{
+
+
+
+    //    // DebugOptions debugOptions;
+    //    //IOptions<DebugOptions> option
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+
+    //        // this.debugOptions = option.Value;
+    //    }
+
+
+
+    //    public void OnAuthorization(AuthorizationFilterContext context)
+    //    {
+    //        context.Result = new ForbidResult();
+
+    //        //if (!this.debugOptions.EnableDebugEndpoints)
+    //        //{
+
+    //        //}
+    //    }
+    //}
+
+    //public class CustomAuthorizeAttribute : AuthorizeAttribute
+    //{
+    //    //private Entities db = new Entities();
+
+    //    IUnitOfWork unitOfWork = new UnitOfWork();
+
+    //    //   NezamDB_EmptyEntities context = new NezamDB_EmptyEntities(); // my entity  
+    //    private readonly int AccessLstID;
+    //    Boolean isLogin = false;
+    //    public CustomAuthorizeAttribute(int AccessLstID)
+    //    {
+    //        this.AccessLstID = AccessLstID;
+
+    //        //   this.Policy = "Access";
+
+    //    }
+    //    public Boolean AuthorizeAttribute()
+    //    {
+    //        bool authorize = false;
+
+
+    //        Guid UserID = CurrentData.GetCurrentUser();
+
+    //        if (UserID == Guid.Empty)
+    //        {
+    //            isLogin = false;
+    //            return false;
+    //        }
+
+    //        isLogin = true;
+
+    //        if (AccessLstID == 0) return true; // is Home Page // just for Common/Home/inndex
+
+
+    //        authorize = unitOfWork.AccessLstRepository.isCheck(AccessLstID);
+
+
+    //        try
+    //        {
+    //            unitOfWork.UserOnlineRepository.SaveCurrentUserOnline();
+
+    //            if (AccessLstID > 0)
+    //            {
+
+    //                var AccessLst = unitOfWork.AccessLstRepository.Find(AccessLstID);
+
+    //                dynamic expando = new ExpandoObject();
+    //                expando.FormName = AccessLst.AccessLst_Name;
+    //                expando.GroupName = AccessLst.AccessLst_MenuGroupName1;
+
+    //                unitOfWork.LogRepository.AddLog(expando, Guid.Parse(ConstIDs.Const_EventLogType_EnterInForm), null);
+    //            }
+
+
+    //            string EM;
+    //            unitOfWork.Commit(out EM);
+    //        }
+    //        catch (Exception Ex)
+    //        {
+
+    //        }
+
+
+    //        return authorize;
+    //    }
+    //    //protected override void HandleUnauthorizedRequest(ActionContext filterContext)
+    //    //{
+    //    //    if (isLogin == false)
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Account/Login");
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        filterContext.Result = new RedirectResult(@"/Common/Shared/NotHavePermission");
+    //    //    }
+    //    //}
+
+    //    //public override void OnAuthorization(AuthorizationContext filterContext)
+    //    //{
+
+    //    //    if (this.AuthorizeCore(filterContext.HttpContext) == false)
+    //    //    {
+    //    //        this.HandleUnauthorizedRequest(filterContext);
+    //    //    }
+
+    //    //}
+
+    //}
+
+}
+
+
+--------------------------
+
+
+using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using DataLayer.Repository;
+using DomainClasses.Context;
+
+namespace DataLayer.Cookies
+{
+    public interface IUserService
+    {
+        ClaimsPrincipal GetUser();
+    }
+
+    public class UserService : IUserService
+    {
+        private readonly IHttpContextAccessor _accessor;
+
+        public UserService(IHttpContextAccessor accessor)
+        {
+            _accessor = accessor;
+        }
+
+        public ClaimsPrincipal GetUser()
+        {
+            
+            //_accessor.Context?.User;
+            var user = _accessor?.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return _accessor?.HttpContext?.User as ClaimsPrincipal;
+        }
+    }
+
+    public static class CurrentData
+    {
+        public static Guid? GetCurrentUser()
+        {
+
+            
+
+            IHttpContextAccessor HCA = new HttpContextAccessor();
+
+            IUserService userService = new UserService(HCA);
+            var US = userService.GetUser();
+
+
+
+            string UserIDString = "7c0b4549-0bfa-42c9-8536-d4bf87e34357";// US?.Identity?.Name; // "3AA19DD8-6AB6-4A40-B6BF-9F0CE0B04BEF"; // System.Web.HttpContext.Current.User.Identity.Name;
+
+            if (string.IsNullOrEmpty(UserIDString) == true) return null;
+
+            Guid UserID;
+
+            if (Guid.TryParse(UserIDString, out UserID) == false)
+            {
+                
+            }
+            return UserID;
+        }
+
+        public static Guid? GetCurrentUniversity()
+        {
+
+            Guid? UserID = GetCurrentUser();
+
+            if (UserID == null) return null;
+
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            var Res = userRepository.Find(UserID.Value).Univercity_ID;
+
+            return Res;
+        }
+
+        //public static VersionEnum GetLastVersion()
+        //{
+        //    return VersionEnum.Version22;
+        //}
+
+
+
+        //public static Guid? GetCurrentPerson()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+
+        //    var User = unitOfWork.UserRepository.Find(UserID);
+        //    Guid? Person_ID = null;
+
+        //    if (User != null)
+        //        Person_ID = unitOfWork.UserRepository.Find(UserID).Person_ID;
+
+
+        //    return Person_ID;
+        //}
+
+        //public static Guid? GetCurrentSematSazemaniID()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid? SematSazemani_ID = unitOfWork.UserRepository.Find(UserID).SematSazemani_ID;
+
+
+        //    return SematSazemani_ID;
+        //}
+
+        //public static string GetCurrentSematSazemaniName()
+        //{
+        //    var ID = GetCurrentSematSazemaniID();
+        //    if (ID == null) return null;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    string SematSazemani_Name = unitOfWork.SematSazemaniRepository.Find(ID.Value).SematSazemani_Name;
+
+        //    return SematSazemani_Name;
+        //}
+
+
+
+        //public static Guid GetCurrentSubsystem()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+
+        //    Guid UserID = GetCurrentUser();
+        //    Guid SubSystemID = unitOfWork.UserRepository.Find(UserID).SubSystem_ActiveID;
+
+        //    return SubSystemID;
+        //}
+        //public static Guid GetCurrentCustomer()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid UserID = GetCurrentUser();
+
+        ////    unitOfWork.UserRepository.GetAll().Include(x => x.SubSystem_tbl);
+
+        //    User_tbl user = unitOfWork.UserRepository.Find(UserID);
+
+
+        //    Guid Customer_ID = unitOfWork.UserRepository.Find(UserID).SubSystem_tbl.Customer_ID;
+        //    return Customer_ID;
+        //}
+
+
+
+
+
+        //public static int GetActiveMaliYear()
+        //{
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    Guid USERID = GetCurrentUser();
+
+        //    int? ActiveYear = unitOfWork.UserRepository.Find(USERID).User_ActiveYear;
+        //    if (ActiveYear == null)
+        //    {
+        //        ActiveYear = unitOfWork.DateRepository.GetPersianDateYear();
+        //    }
+
+        //    return ActiveYear.Value;
+        //}
+
+        //public static string GetCurrentUserName()
+        //{
+        //    Guid UserID = GetCurrentUser();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string UserName= unitOfWork.UserRepository.Find(UserID).User_FullName;
+
+        //    return UserName;
+
+        //}
+
+        //public static string GetCurrentCustomerName()
+        //{
+        //    Guid CustomerID = GetCurrentCustomer();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string CustomerName = unitOfWork.CustomerRepository.Find(CustomerID).Customer_Name;
+
+        //    return CustomerName;
+
+        //}
+
+        //public static string GetCurrentSubsystemName()
+        //{
+        //    Guid SubSystemID = GetCurrentSubsystem();
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string SubSystemName = unitOfWork.SubsystemRepository.Find(SubSystemID).SubSystem_Name;
+
+        //    return SubSystemName;
+
+        //}
+
+
+
+        //public static string GetCurrentPersonName()
+        //{
+        //    Guid? PersonID = GetCurrentPerson();
+
+        //    if (PersonID == null) return string.Empty;
+
+        //    IUnitOfWork unitOfWork = new DataLayer.UnitOfWork.UnitOfWork();
+        //    string PersonFullName = unitOfWork.PersonRepository.Find(PersonID.Value).PersonFullName;
+
+        //    return PersonFullName;
+
+        //}
+
+
+
+    }
+
+
+}
+---------------------------------
+
+using System.Security.Claims;
+using Application.Classes;
+using Application.ViewModels.Access;
+using Application.ViewModels.Person;
+using Application.ViewModels.Univercity;
+using Application.ViewModels.User;
+using DataLayer.Classes;
+using DataLayer.Cookies;
+using DataLayer.Repository;
+using DomainClasses.Context;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using webapi.Controllers;
+
+namespace Application.Controllers
+{
+
+    [ApiController]
+    [Route("[controller]")]
+    public class UnivercityController : ControllerBase
+    {
+        private readonly ILogger<UnivercityController> _logger;
+
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public UnivercityController(ILogger<UnivercityController> logger, IHttpContextAccessor httpContextAccessor)
+        {
+            _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+        }
+        [HttpGet, Route("initNew")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<UnivercityViewModel> initNew()
+        {
+
+
+
+            try
+            {
+                UnivercityViewModel univercityViewModel = new UnivercityViewModel();
+                var obj = univercityViewModel.initNew();
+
+                return obj;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<UnivercityViewModel> resultClass = new ResultClass<UnivercityViewModel>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+        }
+        [HttpGet, Route("Edit")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<UnivercityViewModel> Edit(Guid id)
+        {
+            try
+            {
+                UnivercityViewModel univercityViewModel = new UnivercityViewModel();
+                var obj = univercityViewModel.LoadData(id);
+
+                return obj;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<UnivercityViewModel> resultClass = new ResultClass<UnivercityViewModel>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+        }
+        [HttpPost, Route("StoreData")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<Boolean> StoreData(UnivercityViewModel univercityViewModel)
+        {
+            try
+            {
+                ResultClass<Boolean> res = new ResultClass<bool>();
+
+                if (ModelState.IsValid)
+                {
+                    res = univercityViewModel.StoreData();
+                }
+                else
+                {
+                    var errors = ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                        .Select(m => m.ErrorMessage).ToList();
+                    res.SetError(errors);
+
+                }
+
+                return res;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+
+        }
+        [HttpDelete, Route("Delete")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<Boolean> Delete(Guid id)
+        {
+            try
+            {
+                UnivercityViewModel univercityViewModel = new UnivercityViewModel();
+                var res = univercityViewModel.Delete(id);
+
+                return res;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+        }
+
+        [HttpGet, Route("InitGetList")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<UnivercityListCondViewModel> InitGetList()
+        {
+            var user = HttpContext.User.Identity.Name;
+
+            string userName = _httpContextAccessor.HttpContext.User.Identity.Name;
+
+            try
+            {
+                ResultClass<UnivercityListCondViewModel> resultClass = new ResultClass<UnivercityListCondViewModel>();
+
+                UnivercityListCondViewModel univercityListCondViewModel = new UnivercityListCondViewModel();
+                univercityListCondViewModel.New();
+                resultClass.SetDefualtSuccessSystem();
+
+                return resultClass;
+
+
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<UnivercityListCondViewModel> resultClass = new ResultClass<UnivercityListCondViewModel>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+
+        }
+        [HttpPost, Route("GetList")]
+        [CustomAuthorizeAttribute(3)]
+        public ResultClass<List<UnivercityListCondViewModel.UnivercityListClass>> GetList(UnivercityListCondViewModel univercityListCondViewModel)
+        {
+
+            try
+            {
+                return univercityListCondViewModel.GetAll();
+
+
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<List<UnivercityListCondViewModel.UnivercityListClass>> resultClass = new ResultClass<List<UnivercityListCondViewModel.UnivercityListClass>>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+                return resultClass;
+            }
+        }
+        [HttpGet, Route("GetUnivercityName")]
+        public ResultClass<string> GetUnivercityName()
+        {
+            try
+            {
+                ResultClass<string> resultClass = new ResultClass<string>();
+                var UniverCityId = CurrentData.GetCurrentUniversity();
+                if (UniverCityId == null)
+                {
+                    resultClass.Result = "دانشگاه پیدا نشد";
+                }
+                ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+                UnivercityRepository univercityRepository = new UnivercityRepository(applicationDbContext);
+                var univercity = univercityRepository.Find(UniverCityId.Value);
+                if (univercity == null)
+                {
+                    resultClass.Result = "دانشگاه پیدا نشد";
+                }
+                else
+                {
+                    resultClass.Result = univercity.Univercity_Name;
+                }
+
+
+                return resultClass;
+            }
+            catch (Exception Ex)
+            {
+                ResultClass<string> resultClass = new ResultClass<string>();
+                resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+                return resultClass;
+            }
+
+        }
+    }
+}
+
+
+--------------------------------
+using DomainClasses.Entities;
+using DomainClasses.Context;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using DataLayer.Cookies;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+
+var builder = WebApplication.CreateBuilder(args);
+
+
+//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//    .AddCookie(o => o.LoginPath = new PathString("/Account/login"));
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
+
+
+//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//    .AddCookie(options =>
+//    {
+//        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+//        options.SlidingExpiration = true;
+//        options.AccessDeniedPath = "/Forbidden/";
+//    });
+
+
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+});
+
+
+builder.Services.AddCors(o => o.AddPolicy("AllowAllOrigins", builder =>
+{
+    builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+
+
+}));
+/*builder.Services.AddCors();*/ //ch
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueCountLimit = int.MaxValue;
+    options.BufferBodyLengthLimit = Int64.MaxValue;
+    options.ValueLengthLimit = int.MaxValue;
+    options.KeyLengthLimit = int.MaxValue;
+});
+
+
+
+
+builder.Services.AddHttpContextAccessor();
+
+//builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); ch
+
+//builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUserService, UserService>();
+
+builder.Services.AddDistributedMemoryCache();
+
+
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<ApplicationDbContext>();
+//builder.Services.AddCors();
+
+
+//builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(
+//    options =>
+//    {
+
+//        options.Password.RequireLowercase = false;
+//        options.Password.RequireUppercase = false;
+//        options.Password.RequireDigit = false;
+//        options.Password.RequiredLength = 4;
+//        options.Password.RequireNonAlphanumeric = false;
+
+//    }
+//    )
+//.AddEntityFrameworkStores<ApplicationDbContext>();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+}
+
+//using var scope = app.Services.CreateScope();
+//var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//dbContext.Database.Migrate();
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseCors("AllowAllOrigins");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}");
+
+app.UseSession();
+
+app.MapFallbackToFile("index.html");
+//app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+
+app.MapDefaultControllerRoute();
+
+
+var cookiePolicyOptions = new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Strict,
+};
+
+app.UseCookiePolicy(cookiePolicyOptions);
+
+app.Run();
+
+
+-----------------------------------aap
+
+
+using Application.Classes;
+using DataLayer.Classes;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Text;
+using DomainClasses.Context;
+using Microsoft.EntityFrameworkCore;
+using DomainClasses.Entities;
+using Microsoft.AspNetCore.Identity;
+using DataLayer.Cookies;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
+builder.Services.AddHttpContextAccessor();
+
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
+
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+});
+builder.Services.AddDistributedMemoryCache();
+//builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+//builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUserService, UserService>();
+//builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(
+//    options =>
+//    {
+
+//        options.Password.RequireLowercase = false;
+//        options.Password.RequireUppercase = false;
+//        options.Password.RequireDigit = false;
+//        options.Password.RequiredLength = 4;
+//        options.Password.RequireNonAlphanumeric = false;
+
+//    }
+//    )
+//.AddEntityFrameworkStores<ApplicationDbContext>();
+#region Jwt
+
+//var JwtSettingSection = builder.Configuration.GetSection("JWTSettings");
+//builder.Services.Configure<JWTSettings>(JwtSettingSection);
+
+//var jwtsetting = JwtSettingSection.Get<JWTSettings>();
+//var key = Encoding.ASCII.GetBytes(jwtsetting.Secret);
+
+//builder.Services.AddAuthentication(a =>
+//{
+//    a.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+//    a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//}).AddJwtBearer(option =>
+//{
+//    option.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        IssuerSigningKey = new SymmetricSecurityKey(key),
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = jwtsetting.Issure,
+//        ValidateIssuer = true,
+//        ValidAudience = jwtsetting.Audience,
+//        ValidateAudience = true,
+//        ValidateLifetime = true
+
+//    };
+//});
+
+//builder.Services.AddDbContext<ApplicationDbContext>();
+
+builder.Services.AddDistributedMemoryCache(); //ch
+
+#endregion
+var app = builder.Build();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor
+});
+// Configure the HTTP request pipeline.
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+//using var scope = app.Services.CreateScope();
+//var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//dbContext.Database.Migrate();
+
+app.MapControllers();
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+app.Run();
+
+
+
