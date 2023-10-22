@@ -1303,3 +1303,442 @@ app.Run();
 
 
 
+-----------------------------------------14020730--------------------------------------------------------------------------------
+using DomainClasses.IRepositories;
+
+using Microsoft.Reporting.NETCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web;
+using Microsoft.AspNetCore.Mvc;
+using System.Web.UI;
+using System.Text;
+using System.Drawing.Printing;
+using System.Drawing.Imaging;
+using System.Data;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+
+namespace Application.Controllers
+{
+    public class PrintDirectlyController : Controller
+    {
+        // GET: Common/PrintDirectly
+
+        private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _HostEnvironment;
+        public PrintDirectlyController(Microsoft.AspNetCore.Hosting.IHostingEnvironment HostEnvironment)
+        {
+            this._HostEnvironment = HostEnvironment;
+        }
+
+
+        public ActionResult PrintDirect(ReportDataSource[] ReportDataSources, ReportParameter[] Params, string ReportName, string PrinterName, int? PageWidth = 210, int? PageHeight = 297, int? MarginTop = 5, int? MarginLeft = 4, int? MarginRight = 5, int? MarginBottom = 12)
+        {
+
+            LocalReport report = new LocalReport();
+            report.ReportPath = $"{this._HostEnvironment.WebRootPath}\\Reports\\" + ReportName;
+
+            
+
+            foreach (var item in ReportDataSources)
+            {
+                report.DataSources.Add(item);
+            }
+
+            if (Params != null)
+            {
+                report.SetParameters(Params);
+            }
+
+            PrintToPrinter(report, PrinterName, PageWidth, PageHeight, MarginTop, MarginLeft, MarginRight, MarginBottom);
+
+            return View();
+        }
+        public FileStreamResult Print(ReportDataSource[] ReportDataSources, ReportParameter[] Params, string ReportName, int? PageWidth = 210, int? PageHeight = 297, int? MarginTop = 5, int? MarginLeft = 4, int? MarginRight = 5, int? MarginBottom = 12)
+        {
+            LocalReport report = new LocalReport();
+            report.ReportPath = $"{this._HostEnvironment.WebRootPath}\\Reports\\" + ReportName;
+
+            if (ReportDataSources != null)
+            {
+                foreach (var item in ReportDataSources)
+                {
+                    report.DataSources.Add(item);
+                }
+            }
+
+            if (Params != null)
+            {
+                report.SetParameters(Params);
+                
+            }
+
+            PageSettings instance = new PageSettings();
+            // create the new margin values (left,right,top,bottom)
+            Margins value = new Margins(MarginLeft.Value, MarginRight.Value, MarginTop.Value, MarginBottom.Value);
+            // gives your new pagesetting a value
+            instance.Margins = value;
+
+            string deviceInfo = string.Format("<DeviceInfo>" +
+                                     "  <OutputFormat>EMF</OutputFormat>" +
+                                     "  <PageWidth>{0}mm</PageWidth>" +
+                                     "  <PageHeight>{1}mm</PageHeight>" +
+                                     "  <MarginTop>{2}mm</MarginTop>" +
+                                     "  <MarginLeft>{3}mm</MarginLeft>" +
+                                     "  <MarginRight>{4}mm</MarginRight>" +
+                                     "  <MarginBottom>{5}mm</MarginBottom>" +
+                                     "</DeviceInfo>", PageWidth, PageHeight, MarginTop, MarginLeft, MarginRight, MarginBottom);
+
+
+
+            var Result = report.Render("PDF");
+            MemoryStream ms = new MemoryStream(Result);
+            return new FileStreamResult(ms, "application/pdf");
+
+           
+        }
+
+       
+
+        public ActionResult ExportExcel(ReportDataSource[] ReportDataSources, ReportParameter[] Params, string ReportName)
+        {
+            LocalReport report = new LocalReport();
+            report.ReportPath = $"{this._HostEnvironment.WebRootPath}\\Reports\\" + ReportName;
+
+
+            foreach (var item in ReportDataSources)
+            {
+                report.DataSources.Add(item);
+            }
+
+            if (Params != null)
+            {
+                report.SetParameters(Params);
+            }
+
+            var Result = report.Render("Excel");
+
+            return File(Result, "application/xls", "pr.xls");
+
+
+        }
+
+
+        private IList<Stream> streams;
+        private int CurrentPageIndex { get; set; }
+
+        private Stream CreateStream(string name, string fileNameExtension, Encoding encoding, string mimeType, bool willSeek)
+        {
+            Stream stream = new MemoryStream();
+            streams.Add(stream);
+            return stream;
+        }
+
+        public void PrintToPrinter(LocalReport report, string PrinterName, int? PageWidth = 210, int? PageHeight = 297, int? MarginTop = 5, int? MarginLeft = 4, int? MarginRight = 5, int? MarginBottom = 12)
+        {
+
+            Export(report, PageWidth, PageHeight, MarginTop, MarginLeft, MarginRight, MarginBottom);
+
+            PrinterSettings settings = new PrinterSettings();
+            if (string.IsNullOrEmpty(PrinterName)) PrinterName = settings.PrinterName;
+
+
+            //var PrinterGhabzName = HttpContext.Session.GetString("PrinterGhabzName");
+            //string PrinterName = string.Empty;
+            //if (ControllerContext.HttpContext.Request.Cookies.ContainsKey("PrinterGhabzName"))
+            //{
+            //    PrinterName = ControllerContext.HttpContext.Request.Cookies["PrinterGhabzName"];
+            //}
+
+            Print(false, PrinterName);
+        }
+
+        private void Export(LocalReport report, int? PageWidth, int? PageHeight, int? MarginTop, int? MarginLeft, int? MarginRight, int? MarginBottom)
+        {
+
+            string deviceInfo = string.Format("<DeviceInfo>" +
+                                     "  <OutputFormat>EMF</OutputFormat>" +
+                                     "  <PageWidth>{0}mm</PageWidth>" +
+                                     "  <PageHeight>{1}mm</PageHeight>" +
+                                     "  <MarginTop>{2}mm</MarginTop>" +
+                                     "  <MarginLeft>{3}mm</MarginLeft>" +
+                                     "  <MarginRight>{4}mm</MarginRight>" +
+                                     "  <MarginBottom>{5}mm</MarginBottom>" +
+                                     "</DeviceInfo>", PageWidth, PageHeight, MarginTop, MarginLeft, MarginRight, MarginBottom);
+            Warning[] warnings;
+            streams = new List<Stream>();
+            report.Render("Image", deviceInfo, CreateStream, out warnings);
+            foreach (Stream stream in streams)
+                stream.Position = 0;
+        }
+
+        private void ResetPrint()
+        {
+            foreach (Stream stream in streams)
+                stream.Dispose();
+
+            CurrentPageIndex = 0;
+        }
+
+        private void Print(Boolean IsLandscape, string PrinterName)
+        {
+            PrintDocument printDoc = new PrintDocument();
+            printDoc.DefaultPageSettings.Landscape = IsLandscape;
+            printDoc.PrintPage += PrintPage;
+            printDoc.PrinterSettings.PrinterName = PrinterName;
+            printDoc.Print();
+        }
+
+        private void PrintPage(object sender, PrintPageEventArgs ev)
+        {
+            Metafile pageImage = new Metafile(streams[CurrentPageIndex]);
+            ev.Graphics.DrawImage(pageImage, ev.PageBounds);
+
+            CurrentPageIndex += 1;
+            ev.HasMorePages = (CurrentPageIndex < streams.Count);
+        }
+
+
+
+    }
+}
+
+------------------controller-------------------------
+using Application;
+using Application.Classes;
+using Application.Controllers;
+using Application.ViewModels.Access;
+using Application.ViewModels.Enumv;
+using Application.ViewModels.Markaz;
+using Application.ViewModels.Person;
+using Application.ViewModels.PersonGH;
+using Application.ViewModels.Univercity;
+using Application.ViewModels.User;
+using DataLayer.Classes;
+using DataLayer.Cookies;
+using DataLayer.Repository;
+using DomainClasses.Context;
+using DomainClasses.Enums;
+using DomainClasses.IRepositories;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Reporting.NETCore;
+
+namespace webapi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class PersonController : ControllerBase
+{
+
+    private readonly ILogger<PersonController> _logger;
+    private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _HostEnvironment;
+
+    public PersonController(ILogger<PersonController> logger, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostEnvironment)
+    {
+        _logger = logger;
+        _HostEnvironment= hostEnvironment;  
+    }
+
+
+
+    [HttpGet, Route("initNew")]
+    public ResultClass<PersonViewModel> initNew(Guid? City_ID)
+    {
+        try
+        {
+            PersonViewModel personViewModel = new PersonViewModel();
+            var obj = personViewModel.initNew(City_ID);
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<PersonViewModel> resultClass = new ResultClass<PersonViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+
+    [HttpGet, Route("Edit")]
+    public ResultClass<PersonViewModel> Edit(Guid id)
+    {
+        try
+        {
+            PersonViewModel personViewModel = new PersonViewModel();
+            var obj = personViewModel.LoadData(id);
+
+            return obj;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<PersonViewModel> resultClass = new ResultClass<PersonViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+
+    [HttpPost, Route("StoreData")]
+    public ResultClass<Boolean> StoreData(PersonViewModel personViewModel)
+    {
+        try
+        {
+            ResultClass<Boolean> res = new ResultClass<bool>();
+
+            if (ModelState.IsValid)
+            {
+                res = personViewModel.StoreData();
+            }
+            else
+            {
+                var errors = ModelState.Keys.SelectMany(k => ModelState[k].Errors)
+                                    .Select(m => m.ErrorMessage).ToList();
+                res.SetError(errors);
+
+            }
+
+            return res;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpDelete, Route("Delete")]
+    public ResultClass<Boolean> Delete(Guid id)
+    {
+        try
+        {
+            PersonViewModel personViewModel = new PersonViewModel();
+            var res = personViewModel.Delete(id);
+
+            return res;
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<Boolean> resultClass = new ResultClass<Boolean>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+
+    }
+
+    [HttpGet, Route("InitGetList")]
+    public ResultClass<PersonListCondViewModel> InitGetList()
+    {
+        try
+        {
+            ResultClass<PersonListCondViewModel> resultClass = new ResultClass<PersonListCondViewModel>();
+
+            PersonListCondViewModel PersonViewModel = new PersonListCondViewModel();
+            PersonViewModel.New();
+            resultClass.SetDefualtSuccessSystem();
+
+            return resultClass;
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<PersonListCondViewModel> resultClass = new ResultClass<PersonListCondViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+
+    }
+
+    [HttpPost, Route("GetList")]
+    public ResultClass<List<PersonListCondViewModel.PersonListClass>> GetList(PersonListCondViewModel PersonViewModel)
+    {
+        
+        try
+        {
+            var user = PersonViewModel.GetAll();
+            return user;
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<List<PersonListCondViewModel.PersonListClass>> resultClass = new ResultClass<List<PersonListCondViewModel.PersonListClass>>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return resultClass;
+        }
+    }
+    [HttpPost, Route("PrintPerson")]
+    public FileStreamResult PrintPerson(PersonListCondViewModel VM)
+    {
+        try
+        {
+            ApplicationDbContext applicationDbContext = new ApplicationDbContext();
+            PersonRepository personRepository = new PersonRepository(applicationDbContext);
+            UserRepository userRepository = new UserRepository(applicationDbContext);
+            var person = personRepository.GetAll().Select(x => new {
+                x.Person_ID,
+                x.Person_Name,
+                x.Person_ShNo,
+                x.Person_BirthDay,
+                x.Person_DrNezam,
+                x.EstekhdamiType,
+                x.Person_FatherName,
+                x.Person_HoghoghFix,
+                x.Person_isJaigozin,
+                x.Person_isJaneshin,
+                x.Person_JonbozPrice,
+                x.Person_MeliNo,
+                x.Person_No,
+                x.PersonType
+            }).ToList();
+            //EnumViewModel enumViewModel = new EnumViewModel();
+            DateClass dateClass = new DateClass();
+            var Query = personRepository.GetAll().Include(x => x.City_Tbl);
+            var CityName = "ahvaz";
+            //var GroupName = enumViewModel.GetDisplayName(typeof(PersonTypeEnum), Query.Where(x => x.PersonType == VM.PersonType).FirstOrDefault());
+            var PrintTime = dateClass.GetPersianDate();
+           
+            Guid? userid = CurrentData.GetCurrentUser();
+            var CurrentUser = userRepository.GetAll().Where(x => x.User_ID == userid).SingleOrDefault().User_FullName;
+            ReportDataSource[] ReportDataSources = new ReportDataSource[1];
+            ReportDataSources[0] = new ReportDataSource("PersonList", person);
+            ReportParameter[] parameters = new ReportParameter[4];
+            parameters[0] = new ReportParameter("CityName", CityName);
+            parameters[1] = new ReportParameter("GroupName", "پزشک");
+            parameters[2] = new ReportParameter("PrintTime", PrintTime);
+            parameters[3] = new ReportParameter("CurrentUser", CurrentUser);
+
+              
+             
+
+            PrintDirectlyController printDirectlyController = new PrintDirectlyController(_HostEnvironment);
+
+            return printDirectlyController.Print(ReportDataSources, parameters, "PersonList_rpt.rdlc");
+
+
+        }
+        catch (Exception Ex)
+        {
+            ResultClass<PersonListCondViewModel> resultClass = new ResultClass<PersonListCondViewModel>();
+            resultClass.Errors.Add(ExceptionHandlerClass.GetPersianMessage(Ex));
+
+            return null;
+        }
+    }
+
+
+}
